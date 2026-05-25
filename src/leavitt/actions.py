@@ -200,13 +200,23 @@ def correlate_evidence(state: State) -> tuple[dict, State]:
     )
 
 
+def _unwrap(data: Any) -> Any:
+    """FastMCP wraps a tool's non-object return (e.g. a list) under a single
+    ``result`` key, since MCP structured content must be an object. Peel that
+    envelope so list-returning tools (query_prometheus, query_loki_logs) read
+    the same whether or not they were wrapped."""
+    if isinstance(data, dict) and set(data.keys()) == {"result"}:
+        return data["result"]
+    return data
+
+
 def _summarize(r: SourceResult) -> str:
-    data = r.data
+    data = _unwrap(r.data)
+    if isinstance(data, list):
+        return f"{len(data)} records"
     if isinstance(data, dict):
         keys = list(data.keys())[:6]
         return f"{len(data)} fields ({', '.join(map(str, keys))})"
-    if isinstance(data, list):
-        return f"{len(data)} records"
     return str(data)[:160]
 
 
@@ -282,7 +292,7 @@ def _stub_reason(usable_ev: list[dict]) -> dict[str, Any]:
 
 
 def _services_in(evidence_item: dict) -> list[str]:
-    data = evidence_item.get("data")
+    data = _unwrap(evidence_item.get("data"))
     found = []
     if isinstance(data, list):
         for row in data:
