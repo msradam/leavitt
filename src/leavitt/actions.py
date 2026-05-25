@@ -44,6 +44,11 @@ PROM_LATENCY_P99 = (
 )
 LOKI_WARN_ERROR = '{service_name=~".+"} |~ "(?i)error|warn|exception|timeout"'
 
+# query_prometheus range queries require startTime, endTime, and stepSeconds.
+# Times accept relative form ('now', 'now-1h'). Lookback is configurable.
+LOOKBACK = os.getenv("LEAVITT_LOOKBACK", "now-1h")
+STEP_SECONDS = int(os.getenv("LEAVITT_STEP_SECONDS", "60"))
+
 SOURCES: dict[str, dict[str, Any]] = {
     "grafana_metrics": {
         "server": "grafana",
@@ -52,6 +57,9 @@ SOURCES: dict[str, dict[str, Any]] = {
             "datasourceUid": PROM_DS,
             "expr": PROM_ERROR_RATE,
             "queryType": "range",
+            "startTime": LOOKBACK,
+            "endTime": "now",
+            "stepSeconds": STEP_SECONDS,
         },
         "expect": "any",
     },

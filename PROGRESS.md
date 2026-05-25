@@ -27,10 +27,21 @@ All pass:
 - LLM: Kimi K2 via litellm (`together_ai/moonshotai/Kimi-K2-Instruct-0905`), `LEAVITT_LLM` configurable. `LEAVITT_LLM_STUB=1` for offline dev.
 - Three sources: grafana_metrics, grafana_logs, deployment_context (flagctx). Two physical MCP servers (grafana, flagctx).
 
+### Real Theodosia upstream path verified (`tests/integration_upstream.py`)
+- `theodosia.mount(upstream={grafana, flagctx})` opens real fastmcp.Client stdio sessions; the full FSM is driven through the `step` tool; `call_upstream` hits each server live. All 7 checks pass.
+- Caught a real-MCP detail: FastMCP wraps a tool's list return under `{"result": [...]}`. Added `_unwrap`.
+
+### Real mcp-grafana tool surface confirmed (`mcp/grafana:latest`, SSE on :8000)
+- 56 tools. The two Leavitt uses: `query_prometheus`, `query_loki_logs` (names correct).
+- `query_prometheus` range query **requires** `expr`, `datasourceUid`, `startTime`, `endTime`, `stepSeconds`. My config had only the first two; fixed. Times accept relative form (`now-1h`, `now`).
+- `query_loki_logs` requires `datasourceUid` + `logql`; defaults to last hour, limit, backward. My args valid.
+- Called the real server with Leavitt's exact args: both accepted (failed only on the unreachable placeholder Grafana backend, not on arg validation). Confirms the contract.
+- Discovery path for real datasource UIDs: `list_datasources` (use once a real Grafana is up, instead of guessing `webstore-metrics`/`webstore-logs`).
+
 ### Next (Phase 2)
-- Bring up the OTel Demo and `mcp-grafana`; confirm `query_prometheus` / `query_loki_logs` tool names and datasource UIDs against the real instance.
-- Run one scenario end-to-end against real telemetry with a flagd flag enabled; confirm the injected failure shows up in Prometheus and Leavitt finds it.
+- Bring up the OTel Demo (Grafana + Prometheus + Loki + flagd); point `mcp-grafana` at it; discover real datasource UIDs via `list_datasources`.
+- Enable a flagd flag, confirm the failure shows in Prometheus, run Leavitt end-to-end against real telemetry.
 - Verify Kimi over litellm end-to-end (real key).
 
 ### Blockers
-- None yet. `mcp-grafana` tool names and Grafana datasource UIDs are assumed; verify against the running instance in Phase 2.
+- None. Tool names and arg contracts confirmed against the real `mcp-grafana`. Only the demo's datasource UIDs remain to be read from a live Grafana (one `list_datasources` call), isolated to `SOURCES`/env.

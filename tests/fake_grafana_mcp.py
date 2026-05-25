@@ -16,7 +16,14 @@ mcp = FastMCP("fake-grafana")
 
 
 @mcp.tool
-def query_prometheus(datasourceUid: str, expr: str, queryType: str = "range") -> list:  # noqa: N803 - match mcp-grafana arg names
+def query_prometheus(  # noqa: N803 - match mcp-grafana arg names
+    datasourceUid: str,
+    expr: str,
+    endTime: str,
+    queryType: str = "range",
+    startTime: str = "now-1h",
+    stepSeconds: int = 60,
+) -> list:
     return [
         {"service_name": "product-catalog", "value": 5.4},
         {"service_name": "frontend", "value": 1.2},
