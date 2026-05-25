@@ -30,7 +30,7 @@ from leavitt.chaos_handler import (
 
 # Default datasource UIDs in the OpenTelemetry Demo Grafana. Overridable via env.
 PROM_DS = os.getenv("LEAVITT_PROM_UID", "webstore-metrics")
-LOKI_DS = os.getenv("LEAVITT_LOKI_UID", "webstore-logs")
+LOKI_DS = os.getenv("LEAVITT_LOKI_UID", "webstore-logs-loki")
 
 # Broad incident-surfacing queries. Not scenario-specific: Leavitt reads what is
 # wrong, it is not told what to look for.
@@ -38,16 +38,7 @@ PROM_ERROR_RATE = (
     "sum by (service_name) "
     '(rate(traces_span_metrics_calls_total{status_code="STATUS_CODE_ERROR"}[5m]))'
 )
-PROM_LATENCY_P99 = (
-    "histogram_quantile(0.99, sum by (service_name, le) "
-    "(rate(traces_span_metrics_duration_milliseconds_bucket[5m])))"
-)
 LOKI_WARN_ERROR = '{service_name=~".+"} |~ "(?i)error|warn|exception|timeout"'
-
-# query_prometheus range queries require startTime, endTime, and stepSeconds.
-# Times accept relative form ('now', 'now-1h'). Lookback is configurable.
-LOOKBACK = os.getenv("LEAVITT_LOOKBACK", "now-1h")
-STEP_SECONDS = int(os.getenv("LEAVITT_STEP_SECONDS", "60"))
 
 SOURCES: dict[str, dict[str, Any]] = {
     "grafana_metrics": {
@@ -56,10 +47,8 @@ SOURCES: dict[str, dict[str, Any]] = {
         "args": {
             "datasourceUid": PROM_DS,
             "expr": PROM_ERROR_RATE,
-            "queryType": "range",
-            "startTime": LOOKBACK,
+            "queryType": "instant",
             "endTime": "now",
-            "stepSeconds": STEP_SECONDS,
         },
         "expect": "any",
     },
@@ -228,8 +217,22 @@ def _summarize(r: SourceResult) -> str:
     return str(data)[:160]
 
 
+@action(reads=["evidence", "usable_count"], writes=["digest"])
+def distill_evidence(state: State) -> tuple[dict, State]:
+    """Reduce raw telemetry to a high-signal digest before the reasoning step.
+
+    A distinct action so the exact text the reasoner sees is a recorded entry in
+    the Theodosia ledger, separate from the raw evidence. Deterministic: it
+    extracts known fields from mcp-grafana's stable response shapes, so it cannot
+    drop or paraphrase the signal the way a generative summarizer might.
+    """
+    usable_ev = [e for e in state.get("evidence", []) if e.get("status") == OK]
+    digest = _digest_for_llm(usable_ev) if usable_ev else ""
+    return {"digest": digest}, state.update(digest=digest)
+
+
 @action(
-    reads=["query", "evidence", "usable_count", "confidence"],
+    reads=["query", "digest", "evidence", "usable_count", "confidence"],
     writes=["root_cause", "affected_services", "hypothesis"],
 )
 async def form_hypothesis(state: State) -> tuple[dict, State]:
@@ -242,26 +245,88 @@ async def form_hypothesis(state: State) -> tuple[dict, State]:
         }
         return out, state.update(**out)
 
+    if os.getenv("LEAVITT_LLM_STUB") == "1":
+        usable_ev = [e for e in state.get("evidence", []) if e.get("status") == OK]
+        out = _stub_reason(usable_ev)
+        return out, state.update(**out)
+
     out = await _reason(
-        state["query"], state.get("evidence", []), state.get("confidence", "full")
+        state["query"], state.get("digest", ""), state.get("confidence", "full")
     )
     return out, state.update(**out)
 
 
-async def _reason(query: str, evidence: list[dict], confidence: str) -> dict[str, Any]:
-    usable_ev = [e for e in evidence if e.get("status") == OK]
-    if os.getenv("LEAVITT_LLM_STUB") == "1":
-        return _stub_reason(usable_ev)
+def _digest_for_llm(usable_ev: list[dict]) -> str:
+    """Compact each source to high-signal lines. Reasoning models burn their
+    token budget on raw Prometheus matrices and log dumps, so send a digest:
+    service -> value for metrics, distinct lines for logs, active flags for
+    deployment context."""
+    parts = []
+    for e in usable_ev:
+        name = e.get("source")
+        data = _unwrap(e.get("data"))
+        rows = data.get("data") if isinstance(data, dict) and "data" in data else data
+        if name == "grafana_metrics" and isinstance(rows, list):
+            pairs = []
+            for r in rows:
+                if isinstance(r, dict):
+                    svc = (r.get("metric") or {}).get("service_name") or r.get(
+                        "service_name", "?"
+                    )
+                    val = r.get("value")
+                    if (
+                        val is None
+                        and isinstance(r.get("values"), list)
+                        and r["values"]
+                    ):
+                        val = r["values"][-1]  # range matrix: last [ts, v] point
+                    if isinstance(val, (list, tuple)):
+                        val = val[-1]
+                    try:
+                        val = round(float(val), 4)
+                    except (TypeError, ValueError):
+                        pass
+                    pairs.append(f"{svc}={val}")
+            parts.append(
+                f"[metrics] error/call rate by service: {', '.join(pairs[:20]) or 'no series'}"
+            )
+        elif name == "grafana_logs" and isinstance(rows, list):
+            lines = []
+            for r in rows:
+                if isinstance(r, dict):
+                    svc = (r.get("labels") or {}).get("service_name", "?")
+                    line = (r.get("line") or "").strip()[:160]
+                    if line:
+                        lines.append(f"{svc}: {line}")
+            seen, distinct = set(), []
+            for ln in lines:
+                if ln not in seen:
+                    seen.add(ln)
+                    distinct.append(ln)
+            parts.append(
+                "[logs] sample warning/error lines:\n  "
+                + "\n  ".join(distinct[:15] or ["(none)"])
+            )
+        elif name == "deployment_context" and isinstance(data, dict):
+            active = data.get("active_chaos_flags") or []
+            parts.append(
+                f"[deployment] active feature flags (non-baseline): {active or 'none'}"
+            )
+        else:
+            parts.append(f"[{name}] {json.dumps(data)[:600]}")
+    return "\n\n".join(parts)
 
+
+async def _reason(query: str, digest: str, confidence: str) -> dict[str, Any]:
     import litellm
 
-    model = os.getenv("LEAVITT_LLM", "together_ai/moonshotai/Kimi-K2-Instruct-0905")
+    model = os.getenv("LEAVITT_LLM", "together_ai/moonshotai/Kimi-K2.6")
     prompt = (
         "You are an incident triage analyst reading observability telemetry. "
         "You only read dashboards; you cannot run commands. "
         f"Investigation question:\n{query}\n\n"
         f"Evidence collected (confidence: {confidence}):\n"
-        f"{json.dumps(usable_ev, indent=2)[:6000]}\n\n"
+        f"{digest}\n\n"
         "Identify the most likely root cause and the affected services strictly "
         "from this evidence. If the evidence does not support a conclusion, say so. "
         'Reply with JSON only: {"root_cause": str, "affected_services": [str], "reasoning": str}'
@@ -271,7 +336,9 @@ async def _reason(query: str, evidence: list[dict], confidence: str) -> dict[str
             model=model,
             messages=[{"role": "user", "content": prompt}],
             temperature=0.1,
-            max_tokens=600,
+            # Kimi K2.6 is a reasoning model: tokens are spent on reasoning_content
+            # before the JSON answer lands in content, so the budget must be generous.
+            max_tokens=8000,
         )
         text = resp["choices"][0]["message"]["content"]
         parsed = _parse_json(text)

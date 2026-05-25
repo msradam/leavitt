@@ -1,0 +1,14 @@
+# Loki added to the OTel Demo so Leavitt's grafana_logs source has a Loki
+# datasource to query through mcp-grafana. The demo ships logs to OpenSearch,
+# which mcp-grafana cannot query; the collector also exports logs to Loki via
+# otelcol-config-extras.yml.
+services:
+  loki:
+    image: grafana/loki:3.4.3
+    container_name: loki
+    command: ["-config.file=/etc/loki/local-config.yaml"]
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 200M

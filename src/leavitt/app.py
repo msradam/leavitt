@@ -39,6 +39,7 @@ _INITIAL_STATE: dict[str, Any] = {
     "source_count": 0,
     "confidence": "none",
     "should_retry": False,
+    "digest": "",
     "root_cause": "undetermined",
     "affected_services": [],
     "hypothesis": "",
@@ -57,6 +58,7 @@ def build_application(app_id: str | None = None, track: bool = True) -> Applicat
             query_grafana_logs=actions.query_grafana_logs,
             query_deployment_context=actions.query_deployment_context,
             correlate_evidence=actions.correlate_evidence,
+            distill_evidence=actions.distill_evidence,
             form_hypothesis=actions.form_hypothesis,
             produce_report=actions.produce_report,
         )
@@ -67,7 +69,8 @@ def build_application(app_id: str | None = None, track: bool = True) -> Applicat
             ("query_grafana_logs", "query_deployment_context"),
             ("query_deployment_context", "correlate_evidence"),
             ("correlate_evidence", "query_grafana_metrics", when(should_retry=True)),
-            ("correlate_evidence", "form_hypothesis", default),
+            ("correlate_evidence", "distill_evidence", default),
+            ("distill_evidence", "form_hypothesis"),
             ("form_hypothesis", "produce_report"),
         )
         .with_state(**_INITIAL_STATE)

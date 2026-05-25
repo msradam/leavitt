@@ -1,0 +1,8 @@
+exporters:
+  otlphttp/loki:
+    endpoint: http://loki:3100/otlp
+
+service:
+  pipelines:
+    logs:
+      exporters: [debug, otlphttp/loki]

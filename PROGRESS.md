@@ -45,3 +45,45 @@ All pass:
 
 ### Blockers
 - None. Tool names and arg contracts confirmed against the real `mcp-grafana`. Only the demo's datasource UIDs remain to be read from a live Grafana (one `list_datasources` call), isolated to `SOURCES`/env.
+
+## Live-pipeline smoke against QuickPizza (Mon May 25)
+- Brought up QuickPizza's monolithic Grafana stack (Grafana/Prometheus/Loki/Tempo) as a fast, light real-Grafana substrate. Pointed `mcp-grafana` at it, drove the full Leavitt FSM through `step`. Reached a report; metrics + logs sources returned `ok` against real Prometheus/Loki; deployment_context degraded (no flagd). Confirms the full real path end to end.
+- Real-MCP detail: `mcp-grafana` returns payloads as MCP **text content**, not `structured_content`. Theodosia's `call_upstream._extract` already parses the text JSON, so Leavitt receives real data. (My first diagnostic read the wrong field.)
+- QuickPizza Grafana enables anonymous Admin and disables basic auth; pass `mcp-grafana` **no** API key (a bogus key is rejected and returns empty).
+- QuickPizza torn down after (OOM under contention).
+
+## Infra decision: RunPod ruled out, run locally (Mon May 25)
+- Tried RunPod for the heavy bench. Provisioned a CPU pod via `runpodctl`, SSHed in, probed it: `CapEff` is the default unprivileged Docker set (no `CAP_SYS_ADMIN`/`CAP_NET_ADMIN`), `ip netns add` denied, no sysbox. **RunPod standard pods cannot run a Docker daemon (no DinD)**, so the OTel Demo's docker-compose can't run there regardless of instance size. Pod deleted.
+- Pivoted to local. The laptop was CPU-strangled by sibling projects (`circe-bench-control-plane` kind cluster at ~700% CPU, the `o11y-bench`/`harbor` eval harness respawning compose stacks), not RAM-strangled. With explicit go-ahead, stopped circe and killed the `harbor` orchestrator. Machine now clean: ~7.1 GB free, load dropped from ~21 to ~5.
+- OTel Demo (main/v2) structure: `compose.yaml` (22 app services incl. flagd) + `compose.observability.yaml` (jaeger, grafana, prometheus, opensearch). **Logs go to OpenSearch, not Loki.** `otel-collector` hard-depends on jaeger + opensearch. No Kafka in v2. Cloned the repo for its `src/` config mounts; pulling published ghcr images (no local build).
+
+## Phase 2 complete: live end-to-end against the OTel Demo with Kimi (Mon May 25)
+
+### Substrate up
+- OTel Demo running locally (26 services), ~4 GB free. `deploy/setup_demo.sh up` reproduces it: clones the demo, applies the overlay, starts everything + `mcp-grafana` + Loki.
+- Logs: `mcp-grafana` only queries Loki (no OpenSearch tool), so the overlay adds Loki (`compose.leavitt-loki.yaml`), exports collector logs to it (`otelcol-config-extras.yml`), and provisions a Grafana Loki datasource. Overlay files preserved under `deploy/otel-demo-overlay/` (the demo clone is gitignored).
+- Real datasource UIDs: `webstore-metrics` (Prometheus), `webstore-logs-loki` (Loki). `mcp-grafana` runs anonymous (demo Grafana enables anonymous Admin); pass no API key.
+- `mcp-grafana` attached to the demo's `opentelemetry-demo` network, `GRAFANA_URL=http://grafana:3000`.
+
+### Three real sources confirmed
+- metrics: `query_prometheus` (instant) -> 16 services. Switched from range to **instant** (range returns a matrix Leavitt doesn't need; instant gives current error rate per service and a simpler digest).
+- logs: `query_loki_logs` -> real log lines with `service_name` labels.
+- deployment: `flagctx` reads the demo's `src/flagd/demo.flagd.json` (flagd hot-reloads on edit -> the chaos primitive). Reports `active_chaos_flags`.
+
+### Chaos primitive works
+- Toggling `productCatalogFailure` to `on` (edit the flagd JSON) makes product-catalog emit `STATUS_CODE_ERROR` spans (~1.1/s), cascading to frontend (~4.4) and frontend-proxy (~2.2). flagd reloads on file write.
+- Flag names in v2 differ from the spec: `paymentFailure`/`paymentUnreachable`, `adFailure`, `adHighCpu`, `recommendationCacheFailure`, `cartFailure`, plus `productCatalogFailure`, `kafkaQueueProblems`, `loadGeneratorFloodHomepage`, `imageSlowLoad`.
+
+### LLM: Kimi K2.6 via litellm
+- Together model string is `together_ai/moonshotai/Kimi-K2.6` (the `Kimi-K2-Instruct-0905` string is non-serverless on Together). Set in `.env`.
+- Kimi K2.6 is a **reasoning model**: output is split into `reasoning_content` and `content`. The reasoning consumes the token budget, so `max_tokens` must be generous (8000) or `content` comes back empty (`finish_reason: length`).
+
+### New FSM step: distill_evidence
+- Added `distill_evidence` between `correlate_evidence` and `form_hypothesis`. Deterministically reduces raw telemetry to a high-signal digest (service->rate, distinct log lines, active flags) so the exact text the reasoner sees is a recorded ledger entry, and the reasoning model isn't drowned in raw Prometheus matrices. Chose deterministic over a local-model summarizer: auditable, reproducible, cannot drop the smoking-gun log line.
+
+### End-to-end result (productCatalogFailure on)
+- Leavitt, driven through Theodosia's `step`, with Kimi in `form_hypothesis`, correctly identified: root cause = `productCatalogFailure` feature flag, affected = product-catalog, frontend, frontend-proxy. All 3 real sources usable, full confidence. It used the metrics (error rates), the deployment flag, and dismissed otel-collector log noise as infrastructure. `tests/live_demo.py`.
+
+### Next (Phase 3): benchmark
+- Build `examples/scenarios.yaml` (flagd scenarios with expected services), `bench/runner.py` (Kimi drives Theodosia `step`), `bench/baseline_agent.py` (same LLM, raw MCP, no FSM). Run clean / single-fail / multi-fail x Leavitt / baseline. Score per spec.
+- Disposition in the deterministic driver is always `degraded` (default); the LLM-driven bench runner will let Kimi choose disposition (so a clean run can reach `resolved`).
