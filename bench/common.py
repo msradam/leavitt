@@ -153,14 +153,19 @@ def digest_one(source: str, payload: Any) -> str:
 
 
 def score(report: dict | None, expect_services: list[str]) -> dict:
-    """Score one run against a scenario's ground truth."""
+    """Score one run against a scenario's ground truth.
+
+    A run "found the root cause" only if it reached an actual conclusion (a
+    disposition other than inconclusive) and named the expected service in the
+    root_cause statement. Listing a service among affected_services while
+    declining (inconclusive) does not count, that is naming candidates, not
+    identifying the cause.
+    """
     produced = report is not None
-    rc = (report or {}).get("root_cause", "") or ""
-    services = (report or {}).get("affected_services", []) or []
+    rc = ((report or {}).get("root_cause", "") or "").lower()
     disposition = (report or {}).get("disposition", "") or ""
-    hay = (rc + " " + " ".join(services)).lower()
-    found = any(s.lower() in hay for s in expect_services)
-    # false positive: claimed a confident resolution without actually finding the cause
+    concluded = disposition not in ("", "inconclusive")
+    found = concluded and any(s.lower() in rc for s in expect_services)
     false_positive = disposition == "resolved" and not found
     return {
         "produced_report": produced,

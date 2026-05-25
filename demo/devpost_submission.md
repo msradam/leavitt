@@ -38,6 +38,21 @@ validates every transition against the graph, so the model cannot skip the
 correlation step to jump to a conclusion, and cannot reach a write action
 because the graph has none.
 
+```mermaid
+flowchart TD
+    receive_query --> enumerate_sources --> query_grafana_metrics
+    query_grafana_metrics --> query_grafana_logs --> query_client_load
+    query_client_load --> query_deployment_context --> correlate_evidence
+    correlate_evidence -->|all sources failed: retry| query_grafana_metrics
+    correlate_evidence -->|otherwise| distill_evidence
+    distill_evidence --> form_hypothesis --> produce_report
+```
+
+The flow: receive_query, enumerate_sources, four read-only source queries
+(metrics, logs, client load, deployment context), correlate_evidence (with a
+retry loop on total source failure), distill_evidence, form_hypothesis,
+produce_report.
+
 - **Substrate:** the OpenTelemetry Demo (15+ instrumented microservices) with
   `flagd` for chaos injection. We rewrote the demo's Python/Locust load generator
   in **k6** so the stack is Grafana-native end to end, and wired k6's client-side

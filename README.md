@@ -29,20 +29,24 @@ When a source goes down mid-investigation, Leavitt continues with what it has an
 
 The FSM, enforced by Theodosia:
 
-```
-receive_query
-  -> enumerate_sources
-  -> query_grafana_metrics      PromQL via mcp-grafana (server-side error rate)
-  -> query_grafana_logs         LogQL via mcp-grafana (warning/error logs)
-  -> query_client_load          k6 client-side failure rate (user-facing symptom)
-  -> query_deployment_context   current feature-flag state (what changed)
-  -> correlate_evidence         combine sources, count coverage, mark confidence
-  -> distill_evidence           reduce raw telemetry to a high-signal digest
-  -> form_hypothesis            LLM reasons about cause from the digest
-  -> produce_report             structured report, terminal
+```mermaid
+flowchart TD
+    receive_query --> enumerate_sources --> query_grafana_metrics
+    query_grafana_metrics --> query_grafana_logs --> query_client_load
+    query_client_load --> query_deployment_context --> correlate_evidence
+    correlate_evidence -->|all sources failed: retry| query_grafana_metrics
+    correlate_evidence -->|otherwise| distill_evidence
+    distill_evidence --> form_hypothesis --> produce_report
 ```
 
-with one recovery edge: when every source fails, `correlate_evidence` loops back to re-query before giving up.
+The four read sources:
+
+- `query_grafana_metrics` — PromQL via mcp-grafana, server-side error rate by service
+- `query_grafana_logs` — LogQL via mcp-grafana, warning and error logs
+- `query_client_load` — k6 client-side failure rate per endpoint, the user-facing symptom
+- `query_deployment_context` — current feature-flag state, what changed
+
+`correlate_evidence` counts coverage and marks confidence, with one recovery edge: when every source fails it loops back to re-query before giving up. `distill_evidence` reduces raw telemetry to a high-signal digest before `form_hypothesis`. `produce_report` is terminal and its disposition is constrained by source availability.
 
 - Every action is read-class. There is no write action and no unlock edge, so an LLM driving the `step` tool cannot act on the observed system or skip `correlate_evidence` to jump to a conclusion. Theodosia returns a refusal on any invalid transition.
 - Upstream MCP servers (`mcp-grafana`, a feature-flag context server) are never exposed to the model. Each query happens inside an action via `theodosia.call_upstream`, so it advances state by construction and lands in the audit trail.

@@ -435,6 +435,35 @@ def _parse_json(text: str) -> dict:
     return {}
 
 
+def _observed_entities(evidence: list[dict]) -> str:
+    """A lowercased blob of entities actually seen in collected signal: service
+    names from metrics and logs, k6 endpoint names, and active feature flags.
+    Used to check a claimed root cause is grounded in observed telemetry."""
+    tokens: list[str] = []
+    for e in evidence:
+        if e.get("status") != OK:
+            continue
+        data = _unwrap(e.get("data"))
+        rows = data.get("data") if isinstance(data, dict) and "data" in data else data
+        if isinstance(rows, list):
+            for r in rows:
+                if isinstance(r, dict):
+                    m = r.get("metric") or {}
+                    tokens += [str(m.get("service_name", "")), str(m.get("name", ""))]
+                    labels = r.get("labels") or {}
+                    tokens.append(str(labels.get("service_name", "")))
+        if isinstance(data, dict):
+            tokens += [str(f) for f in (data.get("active_chaos_flags") or [])]
+    return " ".join(t for t in tokens if t).lower()
+
+
+def _grounded(affected: list[str], evidence: list[dict]) -> bool:
+    if not affected:
+        return False
+    blob = _observed_entities(evidence)
+    return any(s.lower() in blob for s in affected if s)
+
+
 @action(
     reads=[
         "query",
@@ -454,10 +483,17 @@ def produce_report(
     usable = state.get("usable_count", 0)
     conf = state.get("confidence", "none")
 
+    affected = list(state.get("affected_services", []))
+
     # Disposition is constrained by evidence, not by the caller's wish.
+    # resolved requires: no source lost (full confidence) AND the named cause
+    # actually appears in the collected signal. A confident hypothesis that
+    # isn't grounded in observed telemetry is downgraded, not trusted.
     if usable == 0:
         disposition = reports.INCONCLUSIVE
-    elif disposition == reports.RESOLVED and conf != "full":
+    elif disposition == reports.RESOLVED and (
+        conf != "full" or not _grounded(affected, state.get("evidence", []))
+    ):
         disposition = reports.DEGRADED
 
     evidence = state.get("evidence", [])
@@ -473,7 +509,7 @@ def produce_report(
         disposition=disposition,
         confidence=conf,
         root_cause=state.get("root_cause", "undetermined"),
-        affected_services=list(state.get("affected_services", [])),
+        affected_services=affected,
         evidence=[
             {"source": e["source"], "summary": e.get("summary", "")} for e in evidence
         ],
