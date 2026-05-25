@@ -101,9 +101,10 @@ async def main() -> int:
     print()
 
     usable = report.get("sources_usable", [])
-    ok &= check("all three sources usable (real upstream calls)", len(usable) == 3)
+    ok &= check("all four sources usable (real upstream calls)", len(usable) == 4)
     ok &= check("grafana_metrics usable", "grafana_metrics" in usable)
     ok &= check("grafana_logs usable", "grafana_logs" in usable)
+    ok &= check("client_load usable", "client_load" in usable)
     ok &= check("deployment_context usable", "deployment_context" in usable)
     ok &= check("full confidence", report.get("confidence") == "full")
     ok &= check(

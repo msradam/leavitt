@@ -1,0 +1,44 @@
+# Replace the Locust load generator with k6 (Grafana-native stack), and let k6
+# remote-write client-side metrics to Prometheus so Leavitt can read them.
+services:
+  # Neuter the Locust loadgen: frontend-proxy depends_on it, so keep a tiny idle
+  # container to satisfy that dependency while k6 generates the real load.
+  load-generator:
+    image: alpine:3.20
+    command: ["sh", "-c", "sleep infinity"]
+    build: !reset null
+
+  # Enable the Prometheus remote-write receiver for k6's metrics (replicates the
+  # demo's command list plus the receiver flag).
+  prometheus:
+    command:
+      - --web.console.templates=/etc/prometheus/consoles
+      - --web.console.libraries=/etc/prometheus/console_libraries
+      - --storage.tsdb.retention.time=7d
+      - --config.file=/etc/prometheus/prometheus-config.yaml
+      - --storage.tsdb.path=/prometheus
+      - --web.enable-lifecycle
+      - --web.route-prefix=/
+      - --web.enable-otlp-receiver
+      - --enable-feature=exemplar-storage
+      - --web.enable-remote-write-receiver
+
+  k6:
+    image: grafana/k6:latest
+    container_name: k6
+    command: ["run", "--out", "experimental-prometheus-rw", "/scripts/loadtest.js"]
+    environment:
+      - K6_PROMETHEUS_RW_SERVER_URL=http://prometheus:9090/api/v1/write
+      - K6_PROMETHEUS_RW_TREND_STATS=p(95),p(99),avg
+      - TARGET=http://frontend-proxy:8080
+      - VUS=8
+    volumes:
+      - ./k6-scripts:/scripts:ro
+    depends_on:
+      frontend-proxy:
+        condition: service_started
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M

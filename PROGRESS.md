@@ -84,6 +84,14 @@ All pass:
 ### End-to-end result (productCatalogFailure on)
 - Leavitt, driven through Theodosia's `step`, with Kimi in `form_hypothesis`, correctly identified: root cause = `productCatalogFailure` feature flag, affected = product-catalog, frontend, frontend-proxy. All 3 real sources usable, full confidence. It used the metrics (error rates), the deployment flag, and dismissed otel-collector log noise as infrastructure. `tests/live_demo.py`.
 
+## k6 integration: Grafana-native load + a 4th client-side source (Mon May 25)
+- The demo's load generator was Locust (Python). Replaced it with **k6** so the whole stack is Grafana-native (k6 -> Prometheus/Loki/Tempo -> Grafana -> mcp-grafana -> Leavitt). `deploy/k6/loadtest.js` mirrors the Locust shopping journey (same endpoints and task weights) so the flagd scenarios still trigger; requests are tagged by endpoint name.
+- `compose.leavitt-k6.yaml`: adds the k6 service (remote-writes to Prometheus), neuters Locust to an idle alpine stub (frontend-proxy depends_on it, so it can't be removed), and enables Prometheus's remote-write receiver.
+- k6 metrics land in Prometheus as `k6_*` (e.g. `k6_http_reqs_total` by `name`, `k6_http_req_duration_p95`, `expected_response` label marks client failures), queryable via mcp-grafana.
+- Added a **4th Leavitt source `client_load`** (`query_client_load` action): client-side failed request rate by endpoint (`k6_http_reqs_total{expected_response="false"}`). This is the user-facing symptom, distinct from server-side span errors. FSM is now metrics -> logs -> client_load -> deployment -> correlate -> distill -> hypothesis -> report.
+- k6 2.0's AI features (`k6 x agent`, `mcp-k6` MCP server) are for *authoring/running* tests, which is a write action, so they stay out of Leavitt's read-only graph. Framing note: mcp-k6 writes load, Leavitt reads the resulting telemetry; two MCP agents either side of the system.
+- End-to-end with chaos on: Kimi correctly used all four sources, citing "K6 client load tests confirm product endpoint failures at 4.07%" alongside server error rates and the active flag, and reasoned that checkout failures were downstream symptoms. Full confidence, correct root cause.
+
 ### Next (Phase 3): benchmark
 - Build `examples/scenarios.yaml` (flagd scenarios with expected services), `bench/runner.py` (Kimi drives Theodosia `step`), `bench/baseline_agent.py` (same LLM, raw MCP, no FSM). Run clean / single-fail / multi-fail x Leavitt / baseline. Score per spec.
 - Disposition in the deterministic driver is always `degraded` (default); the LLM-driven bench runner will let Kimi choose disposition (so a clean run can reach `resolved`).

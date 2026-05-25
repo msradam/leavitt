@@ -40,6 +40,12 @@ PROM_ERROR_RATE = (
 )
 LOKI_WARN_ERROR = '{service_name=~".+"} |~ "(?i)error|warn|exception|timeout"'
 
+# k6 client-side: failed request rate per endpoint (expected_response="false").
+# This is the user-facing symptom, separate from server-side span errors.
+K6_CLIENT_FAILS = (
+    'sum by (name) (rate(k6_http_reqs_total{expected_response="false"}[5m]))'
+)
+
 SOURCES: dict[str, dict[str, Any]] = {
     "grafana_metrics": {
         "server": "grafana",
@@ -56,6 +62,17 @@ SOURCES: dict[str, dict[str, Any]] = {
         "server": "grafana",
         "tool": "query_loki_logs",
         "args": {"datasourceUid": LOKI_DS, "logql": LOKI_WARN_ERROR, "limit": 50},
+        "expect": "any",
+    },
+    "client_load": {
+        "server": "grafana",
+        "tool": "query_prometheus",
+        "args": {
+            "datasourceUid": PROM_DS,
+            "expr": K6_CLIENT_FAILS,
+            "queryType": "instant",
+            "endTime": "now",
+        },
         "expect": "any",
     },
     "deployment_context": {
@@ -107,6 +124,12 @@ async def query_grafana_logs(state: State) -> tuple[dict, State]:
     return {"status": res.status}, state.update(logs_result=res.to_dict())
 
 
+@action(reads=["query"], writes=["client_result"])
+async def query_client_load(state: State) -> tuple[dict, State]:
+    res = await _source_call("client_load")
+    return {"status": res.status}, state.update(client_result=res.to_dict())
+
+
 @action(reads=["query"], writes=["deployment_result"])
 async def query_deployment_context(state: State) -> tuple[dict, State]:
     res = await _source_call("deployment_context")
@@ -115,7 +138,7 @@ async def query_deployment_context(state: State) -> tuple[dict, State]:
 
 def _gather(state: State) -> list[SourceResult]:
     out = []
-    for key in ("metrics_result", "logs_result", "deployment_result"):
+    for key in ("metrics_result", "logs_result", "client_result", "deployment_result"):
         raw = state.get(key)
         if raw:
             out.append(SourceResult(**raw))
@@ -126,6 +149,7 @@ def _gather(state: State) -> list[SourceResult]:
     reads=[
         "metrics_result",
         "logs_result",
+        "client_result",
         "deployment_result",
         "retry_count",
         "max_retries",
@@ -289,6 +313,23 @@ def _digest_for_llm(usable_ev: list[dict]) -> str:
                     pairs.append(f"{svc}={val}")
             parts.append(
                 f"[metrics] error/call rate by service: {', '.join(pairs[:20]) or 'no series'}"
+            )
+        elif name == "client_load" and isinstance(rows, list):
+            pairs = []
+            for r in rows:
+                if isinstance(r, dict):
+                    ep = (r.get("metric") or {}).get("name") or r.get("name", "?")
+                    val = r.get("value")
+                    if isinstance(val, (list, tuple)):
+                        val = val[-1]
+                    try:
+                        val = round(float(val), 4)
+                    except (TypeError, ValueError):
+                        pass
+                    pairs.append(f"{ep}={val}")
+            parts.append(
+                "[client load (k6)] failed request rate by endpoint: "
+                + (", ".join(pairs[:20]) or "no client-side failures")
             )
         elif name == "grafana_logs" and isinstance(rows, list):
             lines = []
