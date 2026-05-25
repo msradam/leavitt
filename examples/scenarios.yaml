@@ -1,0 +1,43 @@
+# Benchmark scenarios. Ground truth is the OpenTelemetry Demo's own flagd flag
+# descriptions, not invented. Each scenario enables one flag and expects the
+# named service to surface as the root cause.
+#
+# A run "finds the root cause" if the report's root_cause or affected_services
+# names any string in expect_services.
+
+scenarios:
+  - id: product_catalog_failure
+    flag: productCatalogFailure
+    query: "Users report product pages erroring. What is the root cause?"
+    expect_services: [product-catalog]
+    symptom: "product-catalog returns errors, cascading to frontend"
+
+  - id: payment_failure
+    flag: paymentFailure
+    query: "Checkout is failing for some users. What is the root cause?"
+    expect_services: [payment]
+    symptom: "payment service fails charge requests, checkout errors downstream"
+
+  - id: cart_failure
+    flag: cartFailure
+    query: "Users cannot view or update their cart. What is the root cause?"
+    expect_services: [cart]
+    symptom: "cart service fails"
+
+  - id: ad_failure
+    flag: adFailure
+    query: "Ads are not rendering and the frontend shows errors. Root cause?"
+    expect_services: [ad]
+    symptom: "ad service fails"
+
+  - id: recommendation_cache_failure
+    flag: recommendationCacheFailure
+    query: "Recommendations are slow or failing. What is the root cause?"
+    expect_services: [recommendation]
+    symptom: "recommendation service cache fails"
+
+# Chaos conditions applied to each scenario.
+#   clean:        all upstream MCP servers available
+#   single_down:  the deployment-context server (flagctx) is unavailable
+#   multi_fail:   flagctx down AND the Grafana MCP server returns malformed data
+conditions: [clean, single_down, multi_fail]
