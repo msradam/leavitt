@@ -1,0 +1,19 @@
+# Grafana MCP server pointed at the OpenTelemetry Demo's Grafana.
+# Leavitt's query_grafana_metrics / query_grafana_logs actions call this
+# server's query_prometheus and query_loki_logs tools.
+#
+# GRAFANA_URL must be reachable from this container. When the demo runs on the
+# same host, use host.docker.internal. Set GRAFANA_API_KEY to a service-account
+# token with Viewer access (read-only).
+services:
+  mcp-grafana:
+    image: mcp/grafana:latest
+    container_name: leavitt-mcp-grafana
+    ports:
+      - "8000:8000"
+    environment:
+      GRAFANA_URL: ${GRAFANA_URL:-http://host.docker.internal:8080/grafana}
+      GRAFANA_API_KEY: ${GRAFANA_API_KEY:-}
+    command: ["-t", "streamable-http", "--address", "0.0.0.0:8000"]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
