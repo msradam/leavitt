@@ -1,18 +1,18 @@
 # Leavitt as a Hermes agent (Nemotron on Crusoe)
 
 Leavitt ships as a [Hermes Agent](https://github.com/NousResearch/hermes-agent)
-profile: a read-only incident-triage agent running NVIDIA Nemotron on Crusoe
-Cloud managed inference, driving the Leavitt MCP server (a Theodosia-enforced
-state machine). The agent is Leavitt; Hermes is the outer harness, Theodosia the
+profile: an on-call incident-triage agent that reads observability dashboards and
+reports the cause, running NVIDIA Nemotron on Crusoe Cloud managed inference and
+driving the Leavitt MCP server (a Theodosia-enforced state machine). The agent is Leavitt; Hermes is the outer harness, Theodosia the
 inner one. Two governance layers on one Nemotron agent: Hermes sandboxes what the
 agent can touch, Theodosia enforces the workflow it must follow.
 
 ## Files
-- `leavitt-profile.config.yaml` — the Hermes profile config (model = Nemotron via
+- `leavitt-profile.config.yaml`: the Hermes profile config (model = Nemotron via
   Crusoe, the Leavitt MCP server, skin = leavitt). Secrets and paths are placeholders.
-- `SOUL.md` — the system prompt: investigate only through the Leavitt MCP tools, never answer from memory.
-- `skins/leavitt.yaml` — the Leavitt skin (Grafana-dark dashboard palette: blue accent, slate panels).
-- `patch-tool-display.py` — makes Hermes render each MCP step as a readable one-liner (see "Readable tool calls").
+- `SOUL.md`: the system prompt: investigate only through the Leavitt MCP tools, never answer from memory.
+- `skins/leavitt.yaml`: the Leavitt skin (observatory palette: sodium-amber star on plate-black).
+- `patch-tool-display.py`: makes Hermes render each MCP step as a readable one-liner (see "Readable tool calls").
 
 ## Install
 ```bash
@@ -39,7 +39,7 @@ substrate up first with `deploy/setup_demo.sh up`.
 ## Clean branding
 
 The Leavitt skin (`skins/leavitt.yaml`, `display.skin: leavitt`) sets the banner
-welcome, the `✦ Leavitt` response label, the Grafana-dark palette, and the spinner
+welcome, the `✦ Leavitt` response label, the observatory palette, and the spinner
 verbs. A few notes for a clean look:
 
 - The skin applies from the **default profile** cleanly. A non-default profile
@@ -76,7 +76,7 @@ result:
 
 ## On-call: scheduled runs
 
-The agent is headless and read-only, so it runs unattended on a schedule. Scope
+The agent is headless and only ever reads, so it runs unattended on a schedule. Scope
 the cron platform to the Leavitt toolset so the scheduled worker can only call
 `step` (no terminal, file, or web tools):
 

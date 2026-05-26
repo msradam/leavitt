@@ -13,16 +13,17 @@ Setup before recording:
 
 ---
 
-## 0:00 – 0:15 — What it is
+## 0:00 – 0:15: What it is
 
-Narration: "Leavitt reads observability dashboards and tells you what broke,
-without touching anything. It's built on Theodosia, a state machine an LLM
-drives one validated step at a time."
+Narration: "Leavitt reads your observability dashboards, correlates the signals,
+and tells you what broke and why. It's built on Theodosia, a state machine an LLM
+drives one validated step at a time. It only reads, so it's safe to run on
+production."
 
 Screen: title, then the two panes. k6top on the left shows steady traffic, low
 error rate. The system is healthy.
 
-## 0:15 – 0:35 — Inject a real incident
+## 0:15 – 0:35: Inject a real incident
 
 Screen: flagd UI, flip `productCatalogFailure` to on.
 
@@ -32,7 +33,7 @@ starts erroring."
 Screen: on the left, k6top's error rate and the product endpoint failures climb.
 This is real telemetry, not a mock.
 
-## 0:35 – 1:15 — Leavitt triages it
+## 0:35 – 1:15: Leavitt triages it
 
 Screen: right pane, run:
 `leavitt investigate "Users report product pages erroring. Root cause?"`
@@ -47,16 +48,16 @@ to frontend and frontend-proxy. The amber report card.
 
 Narration: "It found the flag and the cascade, from the telemetry."
 
-## 1:15 – 1:35 — The guarantee
+## 1:15 – 1:35: The guarantee
 
 Narration: "It can't cut corners. Theodosia enforces the graph."
 
 Screen: a quick clip of an MCP client calling `step` with `produce_report` from
 the start. The response: `invalid_transition`, refused, with the valid next
 action. "The agent literally cannot skip correlation or reach a conclusion early.
-And there is no write action in the graph, so it cannot act on what it observes."
+It won't give you an answer it didn't do the reading for."
 
-## 1:35 – 1:50 — Resilient under chaos
+## 1:35 – 1:50: Resilient under chaos
 
 Narration: "When a source goes down mid-investigation, it degrades instead of
 guessing. When the data is unusable, it returns inconclusive rather than
@@ -65,11 +66,11 @@ hallucinating a cause. It never claims a resolution it can't support."
 Screen: a run with a source killed, the report marked degraded, a recovery event
 logged, still no false positive.
 
-## 1:50 – 2:00 — It composes
+## 1:50 – 2:00: It composes
 
 Narration: "The same agent runs as a Nemotron agent on Crusoe, driven by a Hermes
 harness over MCP, with the model layer routable through TrueFoundry's gateway.
-One artifact. Read-only, auditable, resilient. Built on Theodosia."
+The same agent, the same investigation, wherever it runs. Built on Theodosia."
 
 Screen: the Hermes one-shot output naming the same root cause, then the Theodosia
 GitHub link.

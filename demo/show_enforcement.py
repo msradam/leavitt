@@ -67,11 +67,9 @@ async def main():
         )
         await asyncio.sleep(2.2)
         c.print(
-            "[#DBD7CF]It cannot reach a conclusion without first reading and correlating evidence.[/]"
+            "[#DBD7CF]It cannot reach a conclusion without first reading and correlating the evidence.[/]"
         )
-        c.print(
-            "[#DBD7CF]There is no write action in the graph, so it cannot act on what it observes.[/]"
-        )
+        c.print("[#DBD7CF]Every diagnosis it gives is one it did the reading for.[/]")
         await asyncio.sleep(2.5)
 
 

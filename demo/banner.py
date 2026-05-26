@@ -21,8 +21,16 @@ FAINT = "#4A545D"
 
 # A pulse, dim to bright and back. Period = luminosity.
 PULSE = [
-    "#4A545D", "#6E6347", "#937340", "#BC9248", "#E2AC52",
-    "#F6B755", "#E2AC52", "#BC9248", "#937340", "#6E6347",
+    "#4A545D",
+    "#6E6347",
+    "#937340",
+    "#BC9248",
+    "#E2AC52",
+    "#F6B755",
+    "#E2AC52",
+    "#BC9248",
+    "#937340",
+    "#6E6347",
 ]
 
 
@@ -38,7 +46,7 @@ def frame(star_color: str) -> Group:
         Text(""),
         Align.center(
             Text.assemble(
-                ("read-only on-call triage · built on Theodosia", DIM),
+                ("on-call incident triage · built on Theodosia", DIM),
                 ("      ", DIM),
                 ("“Leave it running.”", f"italic {STAR}"),
             )
@@ -48,7 +56,9 @@ def frame(star_color: str) -> Group:
 
 def main() -> None:
     console = Console()
-    with Live(frame(PULSE[0]), console=console, refresh_per_second=20, screen=True) as live:
+    with Live(
+        frame(PULSE[0]), console=console, refresh_per_second=20, screen=True
+    ) as live:
         for _ in range(8):  # run long enough to outlast `uv run` cold start
             for color in PULSE:
                 live.update(frame(color))

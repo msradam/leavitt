@@ -185,7 +185,7 @@ class View:
         return Panel(t, title="triage report", border_style=ACCENT, title_align="left")
 
     def render(self) -> Group:
-        parts = [("leavitt", f"bold {ACCENT}"), ("  read-only incident triage", DIM)]
+        parts = [("leavitt", f"bold {ACCENT}"), ("  on-call incident triage", DIM)]
         if self.driver:
             parts += [("   driver: ", DIM), (self.driver, f"bold {ACCENT}")]
         parts += [("\n", DIM), (self.query, TEXT)]

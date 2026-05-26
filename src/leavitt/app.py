@@ -122,10 +122,11 @@ def mount_server(upstream: dict[str, Any] | None = None):
         lambda: build_application(),
         name="leavitt",
         instructions=(
-            "Leavitt is a read-only observability triage agent. Drive it with the "
-            "step tool following the enforced FSM. It reads Grafana metrics and logs "
-            "and deployment context, correlates them, then produces a triage report. "
-            "It cannot run commands or modify anything."
+            "Leavitt is an incident-triage agent. It reads Grafana metrics and logs, "
+            "client-side load, and deployment context, correlates them, and reports "
+            "what broke and why. Drive it with the step tool following the enforced "
+            "FSM. It reads and reports; it has no tool to run commands or change "
+            "anything it observes."
         ),
         upstream=upstream if upstream is not None else default_upstream(),
     )

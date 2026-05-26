@@ -44,7 +44,7 @@ The driver never reaches the dashboards. The upstream connections and credential
 
 ## On-call: scheduled and unattended
 
-Because the agent is headless and read-only, it runs unattended. Hermes's scheduler fires the same investigation on an interval, and the cron platform is scoped to the Leavitt toolset, so the scheduled worker has exactly one capability: calling `step`. It wakes, reads the dashboards, walks the FSM to a report in the audit trail, and never has a path to act.
+Because it only reads, it is safe to run unattended. Hermes's scheduler fires the same investigation on an interval, and the cron platform is scoped to the Leavitt toolset, so the scheduled worker has exactly one capability: calling `step`. It wakes, reads the dashboards, and files a report to the audit trail.
 
 ```yaml
 # ~/.hermes/config.yaml: give the scheduled agent only the Leavitt MCP
@@ -124,7 +124,7 @@ Leavitt's own LLM calls route through an OpenAI-compatible gateway with one env 
 
 ## Audit trail
 
-Every run is recorded through Theodosia's tracker. `leavitt sessions` lists past investigations, and `leavitt sessions <id>` shows the full trail: every step that ran, where it stopped, and the report. A session that stalled mid-FSM shows as `incomplete @ <action>` rather than as a wrong answer, the failure is visible, not silent. That is the auditability the read-only guarantee is for.
+Every run is recorded through Theodosia's tracker. `leavitt sessions` lists past investigations, and `leavitt sessions <id>` shows the full trail: every step that ran, where it stopped, and the report. A session that stalled mid-FSM shows as `incomplete @ <action>` rather than as a wrong answer, the failure is visible, not silent. That is the auditability you want from something you leave running.
 
 ```
 $ leavitt sessions

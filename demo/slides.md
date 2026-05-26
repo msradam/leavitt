@@ -45,7 +45,7 @@ hr { border: 0; border-top: 1px solid var(--hair); margin: 26px 0; }
 
 <h2 style="font-size:38px; margin-top:24px;">An incident agent that reads the plate, not the sky.</h2>
 
-<p class="cat">Read-only on-call triage &nbsp;·&nbsp; built on Theodosia</p>
+<p class="cat">On-call incident triage &nbsp;·&nbsp; built on Theodosia</p>
 
 <p class="colophon cat">
 Adam Munawar Rahman &nbsp;·&nbsp; SWE @ IBM &nbsp;·&nbsp; M.S. Computer Engineering, NYU Tandon<br>
@@ -64,12 +64,12 @@ DevNetwork [AI + ML] Hackathon 2026 &nbsp;·&nbsp; AI DevSummit
 Henrietta Swan Leavitt found the period–luminosity law by reading thousands of
 glass plates by hand. Leavitt reads your dashboards the same way:
 <strong>metrics, logs, client load, deployment</strong>, one source at a time, and
-reports the cause.
+reports the cause, with a confidence <em>bounded by the evidence</em>.
 </p>
 
 <p>
-It cannot run a command. The read-only guarantee is <em>structural</em>: the
-state machine has no write action to reach.
+It does the reading; it never acts. That is why you can leave it pointed at
+production.
 </p>
 
 ---
@@ -82,8 +82,8 @@ state machine has no write action to reach.
 
 <p>
 A <strong>Hermes agent running NVIDIA Nemotron on Crusoe</strong> drives the
-enforced FSM, on demand or on a schedule. It wakes, reads, reports, and never
-acts.
+enforced FSM, on demand or on a schedule. It wakes, reads the dashboards, and
+reports the cause.
 </p>
 
 <p>
