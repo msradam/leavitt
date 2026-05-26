@@ -285,13 +285,20 @@ def _read_run(log) -> tuple[set[str], str | None, dict]:
     return done, current, state
 
 
-async def investigate_via_hermes(query: str) -> dict:
+async def investigate_via_hermes(query: str, with_load: bool = False) -> dict:
     """Drive a headless Hermes (Nemotron on Crusoe) run against the Leavitt MCP and
     render the enforced FSM live off Theodosia's audit trail. Hermes is the agent;
     this is its front-end. We read the tracker, not Hermes stdout, so the agent's
-    own banner/skills never reach the view."""
+    own banner/skills never reach the view. With ``with_load``, a live k6 load pane
+    sits above the investigation, one console for the system and the agent reading
+    it."""
     import shutil
+    import time
     from pathlib import Path
+
+    from rich.layout import Layout
+
+    from leavitt.loadview import LoadView
 
     store = _tracker_dir()
     before = {p.name for p in store.iterdir()} if store.exists() else set()
@@ -300,6 +307,18 @@ async def investigate_via_hermes(query: str) -> dict:
     view = View(query)
     view.driver = "Hermes · Nemotron · Crusoe"
     console = Console()
+    load = LoadView() if with_load else None
+    last_load = 0.0
+
+    def render_all():
+        if load is None:
+            return view.render()
+        root = Layout()
+        root.split_column(
+            Layout(load.render(endpoints=True), name="load", size=16),
+            Layout(view.render(), name="agent"),
+        )
+        return root
 
     proc = await asyncio.create_subprocess_exec(
         hermes,
@@ -335,22 +354,27 @@ async def investigate_via_hermes(query: str) -> dict:
                 view.state = state
 
     with Live(
-        view.render(), refresh_per_second=12, screen=True, console=console
+        render_all(), refresh_per_second=12, screen=True, console=console
     ) as live:
         while proc.returncode is None:
+            if load is not None and time.monotonic() - last_load >= 0.9:
+                load.poll()
+                last_load = time.monotonic()
             refresh()
-            live.update(view.render())
+            live.update(render_all())
             try:
                 await asyncio.wait_for(proc.wait(), timeout=0.4)
             except asyncio.TimeoutError:
                 pass
+        if load is not None:
+            load.poll()
         refresh()
         view.current = None
-        live.update(view.render())
-    console.print(view.render())
+        live.update(render_all())
+    console.print(render_all())
     return view.state.get("report") or {}
 
 
-def run_agent(query: str) -> int:
-    asyncio.run(investigate_via_hermes(query))
+def run_agent(query: str, with_load: bool = False) -> int:
+    asyncio.run(investigate_via_hermes(query, with_load=with_load))
     return 0

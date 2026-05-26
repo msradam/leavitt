@@ -21,6 +21,11 @@ def main() -> int:
         "agent", help="drive a headless Hermes/Nemotron run and render it live"
     )
     agt.add_argument("query", help="the incident question")
+    agt.add_argument(
+        "--load",
+        action="store_true",
+        help="show a live k6 load pane above the investigation",
+    )
     ses = sub.add_parser("sessions", help="list past FSM sessions (the audit trail)")
     ses.add_argument("id", nargs="?", help="a session id prefix to show in full")
     sub.add_parser("serve", help="run the Theodosia MCP server over stdio")
@@ -35,7 +40,7 @@ def main() -> int:
     if args.cmd == "agent":
         from leavitt.tui import run_agent
 
-        return run_agent(args.query)
+        return run_agent(args.query, with_load=args.load)
 
     if args.cmd == "sessions":
         from leavitt.sessions import list_sessions, show_session
