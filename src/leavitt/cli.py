@@ -1,6 +1,8 @@
 """Leavitt CLI.
 
 leavitt investigate "<question>"  run a triage with a live terminal view
+leavitt agent "<question>"        drive a headless Hermes/Nemotron run, render it live
+leavitt sessions [id]             list past FSM sessions (the audit trail)
 leavitt serve                     run the MCP server (stdio) for an MCP client
 leavitt graph                     print the FSM topology
 """
