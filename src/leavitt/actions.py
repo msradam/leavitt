@@ -112,28 +112,42 @@ def enumerate_sources(state: State) -> tuple[dict, State]:
     return {"sources": sources}, state.update(sources=sources)
 
 
+def _result(name: str, res: SourceResult) -> dict:
+    """The action result an MCP client sees. Carries a readable one-line summary
+    of what the source returned, so a driving agent's tool log shows the actual
+    telemetry flowing, not just the step name."""
+    out = {"status": res.status}
+    if res.usable:
+        out["summary"] = _digest_for_llm([{"source": name, "status": OK, "data": res.data}])
+    elif res.detail:
+        out["summary"] = res.detail[:140]
+    return out
+
+
 @action(reads=["query"], writes=["metrics_result"])
 async def query_grafana_metrics(state: State) -> tuple[dict, State]:
     res = await _source_call("grafana_metrics")
-    return {"status": res.status}, state.update(metrics_result=res.to_dict())
+    return _result("grafana_metrics", res), state.update(metrics_result=res.to_dict())
 
 
 @action(reads=["query"], writes=["logs_result"])
 async def query_grafana_logs(state: State) -> tuple[dict, State]:
     res = await _source_call("grafana_logs")
-    return {"status": res.status}, state.update(logs_result=res.to_dict())
+    return _result("grafana_logs", res), state.update(logs_result=res.to_dict())
 
 
 @action(reads=["query"], writes=["client_result"])
 async def query_client_load(state: State) -> tuple[dict, State]:
     res = await _source_call("client_load")
-    return {"status": res.status}, state.update(client_result=res.to_dict())
+    return _result("client_load", res), state.update(client_result=res.to_dict())
 
 
 @action(reads=["query"], writes=["deployment_result"])
 async def query_deployment_context(state: State) -> tuple[dict, State]:
     res = await _source_call("deployment_context")
-    return {"status": res.status}, state.update(deployment_result=res.to_dict())
+    return _result("deployment_context", res), state.update(
+        deployment_result=res.to_dict()
+    )
 
 
 def _gather(state: State) -> list[SourceResult]:

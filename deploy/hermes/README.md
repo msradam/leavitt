@@ -34,3 +34,20 @@ hermes -t leavitt          # scope to the Leavitt MCP only
 The Leavitt MCP it drives is started by the profile (`leavitt serve`), which reads
 Grafana metrics/logs and flagd deployment context through mcp-grafana. Bring the
 substrate up first with `deploy/setup_demo.sh up`.
+
+## Clean branding
+
+The Leavitt skin (`skins/leavitt.yaml`, `display.skin: leavitt`) sets the banner
+welcome, the `✦ Leavitt` response label, the amber palette, and the spinner
+verbs. Two notes for a clean look:
+
+- Create the profile with `--no-skills` so the banner shows only the Leavitt
+  line, not Hermes's bundled-skill catalog.
+- The skin applies from the **default profile** cleanly. A non-default profile
+  hits a Hermes `HERMES_HOME` fallback in subprocesses (issue #18594) where the
+  skin/display config may not load; if you use a named profile, launch with
+  `HERMES_HOME=~/.hermes/profiles/<name>` and keep the skin in that profile's
+  `skins/` dir.
+- Scope the agent to the Leavitt MCP with `hermes -t leavitt` so its only tools
+  are Leavitt's, and the `SOUL.md` keeps it investigating through the tools
+  rather than answering from memory.

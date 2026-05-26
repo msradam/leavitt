@@ -13,7 +13,7 @@ Sleep 1s
 Show
 Type "hermes -t leavitt" Enter
 Sleep 4s
-Type "Users report product pages are erroring. Investigate with the leavitt tools and report the root cause and affected services."
+Type "An alert just fired for the webstore. Investigate the current state and tell me what is wrong and which service is responsible."
 Sleep 1s
 Enter
 Sleep 70s
