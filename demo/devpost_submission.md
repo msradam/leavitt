@@ -1,5 +1,13 @@
 # Leavitt
 
+**Title:** Leavitt: an incident agent that reads the plate, not the sky.
+
+**Tagline / elevator pitch:** A read-only, on-call incident-triage agent. It
+reads your observability dashboards one source at a time, finds what broke, and
+reports the cause. It can never touch the systems it watches.
+
+---
+
 Leavitt is a read-only observability triage agent that stays correct when its
 infrastructure falls apart. It is built on Theodosia, a state-machine runtime
 that makes the failure mode of a confused agent a visible, incomplete trace

@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Sans:wght@300;400&family=IBM+Plex+Mono:wght@400&display=swap');
+:root { --plate:#040A12; --ink:#DBD7CF; --dim:#78746D; --star:#F6B755; --moon:#5D8BB4; --hair:#252F39; }
+* { margin:0; box-sizing:border-box; }
+html,body { width:1280px; height:720px; background:var(--plate); color:var(--ink); font-family:"IBM Plex Sans",sans-serif; font-weight:300; overflow:hidden; }
+.wrap { display:flex; width:100%; height:100%; align-items:center; gap:36px; padding:70px 92px; }
+.left { flex:0 0 45%; }
+.bigstar { font-size:58px; color:var(--star); line-height:1; filter:drop-shadow(0 0 14px rgba(246,183,85,0.45)); }
+h1 { font-family:"Instrument Serif",serif; font-weight:400; font-size:116px; margin:10px 0 0; letter-spacing:0.03em; }
+.tag { font-family:"Instrument Serif",serif; font-style:italic; font-size:33px; margin:16px 0 28px; line-height:1.18; }
+.cat { font-family:"IBM Plex Mono",monospace; font-size:13.5px; letter-spacing:0.12em; text-transform:uppercase; color:var(--dim); line-height:1.95; }
+.run { color:var(--star); font-style:italic; font-family:"Instrument Serif",serif; font-size:27px; margin-top:24px; }
+.right { flex:1; display:flex; flex-direction:column; align-items:center; }
+.cap { font-family:"IBM Plex Mono",monospace; font-size:13px; letter-spacing:0.08em; color:var(--dim); margin-top:8px; text-align:center; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="left">
+    <div class="bigstar">&#10022;</div>
+    <h1>LEAVITT</h1>
+    <div class="tag">An incident agent that<br>reads the plate, not the sky.</div>
+    <div class="cat">Read-only on-call incident triage<br>built on Theodosia</div>
+    <div class="run">&ldquo;Leave it running.&rdquo;</div>
+  </div>
+  <div class="right">
+    <svg viewBox="0 0 560 470" width="560" height="470" xmlns="http://www.w3.org/2000/svg">
+      <g stroke="#252F39" stroke-width="1"><line x1="92" y1="60" x2="92" y2="392"/><line x1="92" y1="392" x2="528" y2="392"/></g>
+      <g stroke="#161f29" stroke-width="1"><line x1="92" y1="170" x2="528" y2="170"/><line x1="92" y1="281" x2="528" y2="281"/><line x1="237" y1="60" x2="237" y2="392"/><line x1="383" y1="60" x2="383" y2="392"/></g>
+      <line x1="104" y1="356" x2="520" y2="120" stroke="#5D8BB4" stroke-width="2" stroke-dasharray="2 5" opacity="0.9"/>
+      <g fill="#F6B755" opacity="0.26"><circle cx="120" cy="344" r="9"/><circle cx="152" cy="330" r="9"/><circle cx="186" cy="318" r="9"/><circle cx="222" cy="300" r="9"/><circle cx="258" cy="286" r="9"/><circle cx="296" cy="262" r="9"/><circle cx="334" cy="250" r="9"/><circle cx="372" cy="226" r="9"/><circle cx="412" cy="206" r="9"/><circle cx="452" cy="184" r="9"/><circle cx="492" cy="160" r="9"/></g>
+      <g fill="#F6B755"><circle cx="120" cy="344" r="3.5"/><circle cx="152" cy="330" r="3.5"/><circle cx="186" cy="318" r="3.5"/><circle cx="222" cy="300" r="3.5"/><circle cx="258" cy="286" r="3.5"/><circle cx="296" cy="262" r="3.5"/><circle cx="334" cy="250" r="3.5"/><circle cx="372" cy="226" r="3.5"/><circle cx="412" cy="206" r="3.5"/><circle cx="452" cy="184" r="3.5"/><circle cx="492" cy="160" r="3.5"/></g>
+      <text x="310" y="424" fill="#78746D" font-family="IBM Plex Mono, monospace" font-size="15" letter-spacing="2" text-anchor="middle">LOG PERIOD</text>
+      <text x="50" y="230" fill="#78746D" font-family="IBM Plex Mono, monospace" font-size="15" letter-spacing="2" text-anchor="middle" transform="rotate(-90 50 230)">LUMINOSITY</text>
+    </svg>
+    <div class="cap">Fig. I &nbsp;&middot;&nbsp; the period&ndash;luminosity relation &nbsp;&middot;&nbsp; H. S. Leavitt, 1912</div>
+  </div>
+</div>
+</body>
+</html>
