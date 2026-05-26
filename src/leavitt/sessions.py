@@ -49,7 +49,8 @@ def _parse(run_dir: Path) -> dict | None:
             actions.append(e.get("action"))
             started = started or e.get("start_time")
             if e.get("action") == "receive_query":
-                query = (e.get("inputs") or {}).get("query")
+                ins = e.get("inputs") or {}
+                query = ins.get("query") or ins.get("question")
         elif e.get("type") == "end_entry":
             state = e.get("state") or state
             ended = e.get("end_time")

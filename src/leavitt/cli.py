@@ -28,6 +28,13 @@ def main() -> int:
     )
     ses = sub.add_parser("sessions", help="list past FSM sessions (the audit trail)")
     ses.add_argument("id", nargs="?", help="a session id prefix to show in full")
+    rep = sub.add_parser("report", help="deliver a triage report from the audit trail")
+    rep.add_argument("id", nargs="?", help="session id prefix (default: latest)")
+    rep.add_argument(
+        "--discord",
+        action="store_true",
+        help="post to the Discord webhook (LEAVITT_DISCORD_WEBHOOK)",
+    )
     sub.add_parser("serve", help="run the Theodosia MCP server over stdio")
     sub.add_parser("graph", help="print the FSM topology")
     args = parser.parse_args()
@@ -41,6 +48,11 @@ def main() -> int:
         from leavitt.tui import run_agent
 
         return run_agent(args.query, with_load=args.load)
+
+    if args.cmd == "report":
+        from leavitt.report import deliver
+
+        return deliver(args.id, discord=args.discord)
 
     if args.cmd == "sessions":
         from leavitt.sessions import list_sessions, show_session
