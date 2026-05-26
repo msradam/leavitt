@@ -137,6 +137,10 @@ when                  query                    outcome                          
 2026-05-25 19:36:..   x                        incomplete @ receive_query         1
 ```
 
+`leavitt dashboard` is the live board over the same trail, disposition counts and the recent investigations, refreshing in place. Operators stay on the CLI; scheduled and alert-triggered runs land here as they happen.
+
+![Leavitt on-call dashboard, a live CLI board over the audit trail](demo/media/leavitt-dashboard.gif)
+
 ## Why you can leave it running
 
 Leavitt diagnoses; it has no way to act, and that is the shape of the architecture rather than a policy bolted on. The workflow graph holds only read actions, and the connections to the observed systems live in the server, never in the driving model. There is nothing for it to do but read and report, which is what lets you schedule it and walk away.
