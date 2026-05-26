@@ -4,9 +4,9 @@
 
 # Leavitt
 
-Leavitt is an incident-triage agent that reads observability dashboards and tells you what broke, without touching anything. It ships as a **Hermes agent running NVIDIA Nemotron on Crusoe Cloud managed inference**, runs as a standalone terminal app, and schedules as an unattended on-call worker.
+Leavitt is an on-call incident-triage agent. It reads your observability dashboards, metrics, logs, client-side load, and deployment changes, correlates them, and tells you what broke and why. It ships as a **Hermes agent running NVIDIA Nemotron on Crusoe Cloud managed inference**, runs as a standalone terminal app, and schedules as an unattended worker. Because it only reads, you can leave it pointed at production.
 
-**Built on [Theodosia](https://github.com/msradam/theodosia).** Theodosia mounts a Burr state machine as an MCP server and enforces every transition. Leavitt is the state machine: a read-only triage workflow an LLM drives one validated step at a time. It cannot run commands, open shells, or modify the systems it observes. The read-only guarantee is structural, the graph contains only read actions and no path to a write.
+**Built on [Theodosia](https://github.com/msradam/theodosia).** Theodosia mounts a Burr state machine as an MCP server and enforces every transition. Leavitt is the state machine: a triage workflow an LLM drives one validated step at a time, so every conclusion rests on evidence gathered in order rather than on the model's confidence. Theodosia checks each transition against the graph, and because the graph holds only read actions, the agent diagnoses with no way to act on what it observes.
 
 Leavitt rendering a headless Hermes run (Nemotron on Crusoe) as it drives the enforced FSM one validated step at a time, live off Theodosia's audit trail:
 
@@ -133,9 +133,9 @@ when                  query                    outcome                          
 2026-05-25 19:36:..   x                        incomplete @ receive_query         1
 ```
 
-## Read-only by construction
+## Why you can leave it running
 
-Leavitt synthesizes observability information and never acts. That separation is the architecture, not a policy: the graph has nothing else in it, and the connection to the observed system lives only in the server.
+Leavitt diagnoses; it has no way to act, and that is the shape of the architecture rather than a policy bolted on. The workflow graph holds only read actions, and the connections to the observed systems live in the server, never in the driving model. There is nothing for it to do but read and report, which is what lets you schedule it and walk away.
 
 ## Name
 
