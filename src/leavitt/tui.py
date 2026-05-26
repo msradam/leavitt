@@ -203,6 +203,12 @@ async def investigate(query: str, upstream: dict | None = None) -> dict:
 
 
 def run(query: str) -> int:
+    import logging
+
+    # Mute litellm's import-time AWS pre-load warnings (we don't use Bedrock),
+    # so the live view stays clean.
+    os.environ.setdefault("LITELLM_LOG", "ERROR")
+    logging.getLogger("LiteLLM").setLevel(logging.ERROR)
     os.environ.setdefault("LEAVITT_PROM_UID", "webstore-metrics")
     os.environ.setdefault("LEAVITT_LOKI_UID", "webstore-logs-loki")
     asyncio.run(investigate(query))

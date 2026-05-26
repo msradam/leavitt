@@ -2,25 +2,23 @@
 
 Leavitt reads observability dashboards and tells you what broke, without touching anything.
 
-**Built on [Theodosia](https://github.com/msradam/theodosia).** Theodosia mounts a Burr state machine as an MCP server and enforces every transition. Leavitt is the state machine: a read-only incident triage agent that an LLM drives one validated step at a time. It cannot run commands, open shells, or modify the systems it observes. The read-only guarantee is structural, the graph contains only read actions and no path to a write.
+**Built on [Theodosia](https://github.com/msradam/theodosia).** Theodosia mounts a Burr state machine as an MCP server and enforces every transition. Leavitt is the state machine: a read-only incident triage agent driven one validated step at a time. It cannot run commands, open shells, or modify the systems it observes. The read-only guarantee is structural, the graph contains only read actions and no path to a write.
+
+![Leavitt triaging a live incident](demo/media/leavitt-investigate.gif)
 
 ## What it does
 
-You give Leavitt an incident question. It queries metrics, logs, client-side load results, and deployment context from real observability backends through MCP servers, correlates what came back, notes what is missing, and produces a triage report with a disposition that is constrained by the evidence, not by the model's confidence.
+You give Leavitt an incident question. It reads metrics, logs, client-side load results, and deployment context from real observability backends through MCP servers, correlates what came back, notes what is missing, and produces a triage report with a disposition constrained by the evidence, not by the model's confidence.
 
 ```
 $ leavitt investigate "Users report product pages erroring. Root cause?"
 
-disposition:       degraded
+disposition:       resolved
 confidence:        full
 root cause:        productCatalogFailure feature flag is failing the product-catalog
                    service, cascading to frontend and frontend-proxy
 affected services: product-catalog, frontend, frontend-proxy
 sources usable:    4/4 (grafana_metrics, grafana_logs, client_load, deployment_context)
-evidence:
-  - [grafana_metrics] error rate product-catalog 9.58%, frontend 36.67%
-  - [client_load]     k6 product endpoint failures 4.07%
-  - [deployment_context] active flag: productCatalogFailure
 ```
 
 When a source goes down mid-investigation, Leavitt continues with what it has and marks the report `degraded`. When nothing usable comes back, it refuses to conclude `resolved` and returns `inconclusive`. It does not invent evidence, and it does not claim a resolution it cannot support.
@@ -46,11 +44,13 @@ The four read sources:
 - `query_client_load` — k6 client-side failure rate per endpoint, the user-facing symptom
 - `query_deployment_context` — current feature-flag state, what changed
 
-`correlate_evidence` counts coverage and marks confidence, with one recovery edge: when every source fails it loops back to re-query before giving up. `distill_evidence` reduces raw telemetry to a high-signal digest before `form_hypothesis`. `produce_report` is terminal and its disposition is constrained by source availability.
+`correlate_evidence` counts coverage and marks confidence, with one recovery edge: when every source fails it loops back to re-query before giving up. `distill_evidence` reduces raw telemetry to a high-signal digest before `form_hypothesis`. `produce_report` is terminal; `resolved` requires full source coverage and a cause grounded in the observed signal.
 
-- Every action is read-class. There is no write action and no unlock edge, so an LLM driving the `step` tool cannot act on the observed system or skip `correlate_evidence` to jump to a conclusion. Theodosia returns a refusal on any invalid transition.
-- Upstream MCP servers (`mcp-grafana`, a feature-flag context server) are never exposed to the model. Each query happens inside an action via `theodosia.call_upstream`, so it advances state by construction and lands in the audit trail.
+- Every action is read-class. There is no write action and no unlock edge, so the driver cannot act on the observed system or skip `correlate_evidence` to jump to a conclusion. Theodosia refuses any invalid transition.
+- Upstream MCP servers (`mcp-grafana`, a feature-flag context server) are never exposed to the driver. Each query happens inside an action via `theodosia.call_upstream`, so it advances state by construction and lands in the audit trail. The credentials and connections to the observed backends live in the Leavitt server, never in the driver, so no driver can reach the dashboards except by asking Leavitt to read them.
 - Upstream failures are classified (`ok` / `error` / `malformed`) before they reach correlation, so one bad source cannot poison the report.
+
+![Theodosia refusing an invalid transition](demo/media/leavitt-enforcement.gif)
 
 ## Install
 
@@ -66,31 +66,24 @@ Leavitt observes the [OpenTelemetry Demo](https://github.com/open-telemetry/open
 
 ```bash
 cd deploy && ./setup_demo.sh up      # demo + mcp-grafana + Loki + k6
-```
-
-Point Leavitt at it:
-
-```bash
 export LEAVITT_GRAFANA_MCP=http://localhost:8000/sse
-export LEAVITT_PROM_UID=webstore-metrics
-export LEAVITT_LOKI_UID=webstore-logs-loki
+export LEAVITT_FLAGCTX_CONFIG=$PWD/opentelemetry-demo/src/flagd/demo.flagd.json
+leavitt investigate "Users report product pages erroring. Root cause?"
 ```
 
 ## Benchmark
 
-`bench/runner.py` runs each `flagd` failure scenario under three conditions:
+`bench/runner.py` runs each `flagd` failure scenario under three conditions: **clean** (all servers up), **single_down** (the deployment-context server is killed), and **multi_fail** (it is killed and the Grafana MCP server returns malformed data). Both arms are the same model driving via tool calls against the same servers and the same digested evidence. The only difference is the Theodosia layer: the **Leavitt** arm drives the enforced FSM with evidence-constrained disposition; the **baseline** calls the raw query tools and writes its own report, with no FSM. Ground truth is the demo's own `flagd` flag descriptions.
 
-- **clean**: all MCP servers up.
-- **single_down**: the deployment-context server is killed.
-- **multi_fail**: that server is killed and the Grafana MCP server returns malformed data.
+What it shows, honestly: with a capable model (Kimi K2.6) the two arms reach the same conclusions and neither produces a false positive. The benchmark measures that the enforcement layer costs nothing in accuracy while making the agent's behavior bounded and auditable, the disposition is constrained by evidence, every read is in the audit trail, and the failure mode under chaos is a degraded or inconclusive report rather than a confident wrong one. Full tables: [`demo/results_table.md`](demo/results_table.md).
 
-The same model (Kimi) drives both arms via tool calls against the same servers and the same digested evidence. The only difference is the Theodosia layer: the **Leavitt** arm drives the enforced FSM with evidence-constrained disposition; the **baseline** arm calls the raw query tools and writes its own report, with no FSM. Ground truth is the demo's own `flagd` flag descriptions.
+## Composes with the ecosystem
 
-Results: see [`demo/results_table.md`](demo/results_table.md).
+Because Theodosia mounts Leavitt as a standard MCP server, other agents drive it with no custom glue. A **Hermes agent running NVIDIA Nemotron on Crusoe** managed inference drives Leavitt over MCP and reaches the correct root cause, the agent is Leavitt, Hermes is the outer harness, Theodosia the inner one. Leavitt's own LLM calls route through an OpenAI-compatible gateway (validated with **TrueFoundry's AI Gateway**) with one env switch, so provider failover happens at the gateway while Theodosia handles data-layer resilience. See [`deploy/integrations.md`](deploy/integrations.md).
 
 ## Read-only by construction
 
-Leavitt synthesizes observability information and never acts. That separation is the architecture, not a policy: the graph has nothing else in it.
+Leavitt synthesizes observability information and never acts. That separation is the architecture, not a policy: the graph has nothing else in it, and the connection to the observed system lives only in the server.
 
 ## Name
 
