@@ -41,16 +41,10 @@ def frame(star_color: str) -> Group:
         Text(""),
         Align.center(Text("L E A V I T T", style=f"bold {TEXT}")),
         Align.center(
-            Text("on-call AI agent that turns alerts into answers", style=DIM)
+            Text("On-Call AI Agent, Turns Alerts Into Answers", style=f"bold {STAR}")
         ),
         Text(""),
-        Align.center(
-            Text.assemble(
-                ("incident triage · built on Theodosia", DIM),
-                ("      ", DIM),
-                ("“Leave it running.”", f"italic {STAR}"),
-            )
-        ),
+        Align.center(Text("incident triage · built on Theodosia", style=DIM)),
     )
 
 

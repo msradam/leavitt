@@ -43,7 +43,7 @@ hr { border: 0; border-top: 1px solid var(--hair); margin: 26px 0; }
 
 # LEAVITT
 
-<h2 style="font-size:38px; margin-top:24px;">On-call AI agent that turns alerts into answers.</h2>
+<h2 style="font-size:38px; margin-top:24px;">On-Call AI Agent,<br>Turns Alerts Into Answers</h2>
 
 <p class="cat">Incident triage &nbsp;·&nbsp; built on Theodosia</p>
 
@@ -78,7 +78,7 @@ production.
 
 <p class="cat">§ II &nbsp; On call</p>
 
-## Leave it running.
+## Always on.
 
 <p>
 A <strong>Hermes agent running NVIDIA Nemotron on Crusoe</strong> drives the
