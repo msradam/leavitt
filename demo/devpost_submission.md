@@ -1,6 +1,6 @@
 # Leavitt
 
-**Title:** Leavitt: an incident agent that reads the plate, not the sky.
+**Title:** Leavitt: it reads your dashboards and tells you what broke.
 
 **Tagline / elevator pitch:** Leavitt is an on-call incident-triage agent. It
 reads every signal you have, metrics, logs, client-side load, and deployment

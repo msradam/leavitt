@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="demo/media/leavitt-masthead.gif" alt="Leavitt, an incident agent that reads the plate, not the sky" width="820">
+  <img src="demo/media/leavitt-masthead.gif" alt="Leavitt, an agent that reads your dashboards and tells you what broke" width="820">
 </p>
 
 # Leavitt

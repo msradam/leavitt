@@ -41,7 +41,7 @@ def frame(star_color: str) -> Group:
         Text(""),
         Align.center(Text("L E A V I T T", style=f"bold {TEXT}")),
         Align.center(
-            Text("an incident agent that reads the plate, not the sky", style=DIM)
+            Text("it reads your dashboards and tells you what broke", style=DIM)
         ),
         Text(""),
         Align.center(

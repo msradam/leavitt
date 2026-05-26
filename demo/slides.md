@@ -43,7 +43,7 @@ hr { border: 0; border-top: 1px solid var(--hair); margin: 26px 0; }
 
 # LEAVITT
 
-<h2 style="font-size:38px; margin-top:24px;">An incident agent that reads the plate, not the sky.</h2>
+<h2 style="font-size:38px; margin-top:24px;">It reads your dashboards and tells you what broke.</h2>
 
 <p class="cat">On-call incident triage &nbsp;·&nbsp; built on Theodosia</p>
 
