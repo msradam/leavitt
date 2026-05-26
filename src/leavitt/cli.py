@@ -15,6 +15,8 @@ def main() -> int:
     sub = parser.add_subparsers(dest="cmd")
     inv = sub.add_parser("investigate", help="run a triage with a live terminal view")
     inv.add_argument("query", help="the incident question")
+    ses = sub.add_parser("sessions", help="list past FSM sessions (the audit trail)")
+    ses.add_argument("id", nargs="?", help="a session id prefix to show in full")
     sub.add_parser("serve", help="run the Theodosia MCP server over stdio")
     sub.add_parser("graph", help="print the FSM topology")
     args = parser.parse_args()
@@ -23,6 +25,11 @@ def main() -> int:
         from leavitt.tui import run
 
         return run(args.query)
+
+    if args.cmd == "sessions":
+        from leavitt.sessions import list_sessions, show_session
+
+        return show_session(args.id) if args.id else list_sessions()
 
     if args.cmd == "graph":
         from leavitt.app import build_application

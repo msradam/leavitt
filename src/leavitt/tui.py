@@ -173,7 +173,7 @@ def _disposition(state: dict) -> str:
 
 
 async def investigate(query: str, upstream: dict | None = None) -> dict:
-    app = build_application(track=False)
+    app = build_application(track=True)  # record the run to the audit trail
     mgr = UpstreamManager(upstream if upstream is not None else default_upstream())
     token = theodosia.bind_upstream(mgr)
     view = View(query)

@@ -94,6 +94,17 @@ What it shows, honestly: with a capable model (Kimi K2.6) the two arms reach the
 
 Leavitt's own LLM calls route through an OpenAI-compatible gateway with one env switch (`LEAVITT_LLM_API_BASE` / `LEAVITT_LLM_API_KEY`), validated with **TrueFoundry's AI Gateway**. Provider failover, retries, and load balancing happen at the gateway; Theodosia handles data-layer resilience (degraded or inconclusive reports when sources fail, never a confident wrong one). The model that drives the FSM and the model behind the gateway can differ; both are swappable. See [`deploy/integrations.md`](deploy/integrations.md).
 
+## Audit trail
+
+Every run is recorded through Theodosia's tracker. `leavitt sessions` lists past investigations, and `leavitt sessions <id>` shows the full trail: every step that ran, where it stopped, and the report. A session that stalled mid-FSM shows as `incomplete @ <action>` rather than as a wrong answer, the failure is visible, not silent. That is the auditability the read-only guarantee is for.
+
+```
+$ leavitt sessions
+when                  query                    outcome                          steps
+2026-05-25 21:24:..   product pages erroring   resolved  productCatalogFailure   10
+2026-05-25 19:36:..   x                        incomplete @ receive_query         1
+```
+
 ## Read-only by construction
 
 Leavitt synthesizes observability information and never acts. That separation is the architecture, not a policy: the graph has nothing else in it, and the connection to the observed system lives only in the server.
