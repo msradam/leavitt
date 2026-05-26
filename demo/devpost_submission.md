@@ -88,6 +88,14 @@ agent. Separately, Leavitt's LLM calls route through **TrueFoundry's AI Gateway*
 (one env switch), so provider failover and retries happen at the gateway while
 Theodosia handles data-layer resilience. Same artifact, three sponsors.
 
+**An on-call agent, not a chatbot.** Because the agent is headless and read-only,
+it runs unattended. A Hermes cron schedule fires the same investigation on an
+interval, and we scope the cron platform to the Leavitt toolset so the scheduled
+worker has exactly one capability: calling `step`. It wakes, reads the
+dashboards, walks the FSM to a report in the audit trail, and never has a path to
+act. That is the agent you can leave running at 3am: its worst case under chaos
+is a visible incomplete trace, not a confident wrong page.
+
 ## Challenges we ran into
 
 - **RunPod cannot run Docker.** We tried to offload the heavy substrate to a
@@ -137,9 +145,9 @@ emits its own telemetry; point Leavitt at it and the read-only triage agent
 becomes an on-call observer for an agent fleet, reporting what degraded without
 ever acting. The composition we proved (a Nemotron agent driving a Theodosia
 FSM, LLM routable through a gateway) generalizes: any Theodosia-mounted workflow
-is an enforced, auditable tool any MCP client can drive. Next is widening the
-source set (traces via the Jaeger datasource, a latency query for cache-style
-failures that do not raise error rates) and a `watch` mode that fires on an
-alert instead of a human prompt.
+is an enforced, auditable tool any MCP client can drive. Scheduled on-call runs
+already work through Hermes cron; next is firing on an alert webhook instead of a
+schedule, and widening the source set (traces via the Jaeger datasource, a
+latency query for cache-style failures that do not raise error rates).
 
 Built on [Theodosia](https://github.com/msradam/theodosia).

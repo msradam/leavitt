@@ -73,3 +73,25 @@ result:
 │ ⚡ step  correlate_evidence     0.3s
 │ ⚡ step  produce_report         0.8s
 ```
+
+## On-call: scheduled runs
+
+The agent is headless and read-only, so it runs unattended on a schedule. Scope
+the cron platform to the Leavitt toolset so the scheduled worker can only call
+`step` (no terminal, file, or web tools):
+
+```yaml
+# ~/.hermes/config.yaml
+platform_toolsets:
+  cron: [leavitt]
+```
+
+```bash
+hermes cron create '0 * * * *' "An alert fired for the webstore. Investigate and report." \
+  --profile default --name leavitt-oncall
+hermes cron run leavitt-oncall && hermes cron tick   # fire once now
+# or run the gateway to fire on schedule: hermes gateway install
+```
+
+Each run drives the full FSM to a report in Theodosia's tracker; `leavitt
+sessions` lists them, completed or `incomplete @ <action>`.

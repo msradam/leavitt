@@ -1,6 +1,6 @@
 # Leavitt
 
-Leavitt is an incident-triage agent that reads observability dashboards and tells you what broke, without touching anything. It ships as a **Hermes agent running NVIDIA Nemotron on Crusoe Cloud managed inference**, and runs as a standalone terminal app.
+Leavitt is an incident-triage agent that reads observability dashboards and tells you what broke, without touching anything. It ships as a **Hermes agent running NVIDIA Nemotron on Crusoe Cloud managed inference**, runs as a standalone terminal app, and schedules as an unattended on-call worker.
 
 **Built on [Theodosia](https://github.com/msradam/theodosia).** Theodosia mounts a Burr state machine as an MCP server and enforces every transition. Leavitt is the state machine: a read-only triage workflow an LLM drives one validated step at a time. It cannot run commands, open shells, or modify the systems it observes. The read-only guarantee is structural, the graph contains only read actions and no path to a write.
 
@@ -39,6 +39,24 @@ Hermes agent (Nemotron via Crusoe)  ──MCP──>  Leavitt (Theodosia step su
 The driver never reaches the dashboards. The upstream connections and credentials live in the Leavitt server, and Nemotron sees only the `step` tool, so no driver, however capable, can touch the observed system except by asking Leavitt to read it. Install and run it as a branded Hermes profile: [`deploy/hermes/`](deploy/hermes/).
 
 `leavitt agent "<incident>"` runs this headless: it launches a Hermes/Nemotron/Crusoe run against the Leavitt MCP and renders the enforced FSM live in Leavitt's own view by reading Theodosia's audit trail, the hero recording above. Hermes is the agent; the view is its front-end.
+
+## On-call: scheduled and unattended
+
+Because the agent is headless and read-only, it runs unattended. Hermes's scheduler fires the same investigation on an interval, and the cron platform is scoped to the Leavitt toolset, so the scheduled worker has exactly one capability: calling `step`. It wakes, reads the dashboards, walks the FSM to a report in the audit trail, and never has a path to act.
+
+```yaml
+# ~/.hermes/config.yaml: give the scheduled agent only the Leavitt MCP
+platform_toolsets:
+  cron: [leavitt]
+```
+
+```bash
+hermes cron create '0 * * * *' "An alert fired for the webstore. Investigate and report." \
+  --profile default --name leavitt-oncall
+hermes cron tick    # run due jobs once (or run the gateway to fire on schedule)
+```
+
+Each firing lands in the trail: `leavitt sessions` lists every scheduled run, complete or `incomplete @ <action>`. A triage worker whose worst case is a visible incomplete trace is one you can leave running.
 
 ## Architecture
 
