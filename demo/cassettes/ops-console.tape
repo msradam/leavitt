@@ -6,7 +6,7 @@ Output demo/media/leavitt-ops-console.mp4
 Set Shell "zsh"
 Set FontSize 18
 Set Width 1320
-Set Height 720
+Set Height 980
 Set Padding 10
 Set Theme "Catppuccin Mocha"
 Hide
@@ -22,4 +22,4 @@ Sleep 7s
 Type "tmux send-keys -t ops.1 'An alert fired for the webstore. Investigate the current state and report what is wrong and which service is responsible.' Enter" Enter
 Type "tmux attach -t ops" Enter
 Show
-Sleep 82s
+Sleep 60s
