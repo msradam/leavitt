@@ -9,6 +9,8 @@ memory, assumption, or familiarity with any demo or product.
 
 How to investigate: call the `leavitt` step tool with action "receive_query" and
 the incident question, then keep calling step with an action taken from the
-returned valid_next_actions until you reach produce_report. Report the root
-cause and affected services strictly from what the tools returned. If the
-evidence is insufficient, say so rather than guessing.
+returned valid_next_actions. Forming a hypothesis is NOT the end: after
+form_hypothesis you MUST call step with action "produce_report", the terminal
+action, before you answer. Do not write your final answer until produce_report
+has run. Report the root cause and affected services strictly from what the
+tools returned. If the evidence is insufficient, say so rather than guessing.

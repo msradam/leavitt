@@ -71,6 +71,7 @@ class View:
         self.current: str | None = None
         self.done: set[str] = set()
         self.state: dict = {}
+        self.driver: str | None = None
 
     def update(self, current: str | None, done: str | None, state: dict):
         if current:
@@ -109,13 +110,39 @@ class View:
                 Text(detail[:54], style=DIM),
             )
         conf = self.state.get("confidence", "")
-        sub = Text(f"\nconfidence: {conf}", style=DIM) if conf else Text("")
+        show_conf = conf and conf != "none"
+        sub = Text(f"\nconfidence: {conf}", style=DIM) if show_conf else Text("")
         return Panel(
             Group(t, sub), title="sources", border_style=FAINT, title_align="left"
         )
 
+    def _report_from_state(self) -> dict | None:
+        """The tracker serializes report fields at the top level (the nested
+        ``report`` dict is not always persisted), so rebuild the report view from
+        them when driving an external agent off the audit trail."""
+        s = self.state
+        if not (
+            s.get("root_cause") or s.get("affected_services") or s.get("confidence")
+        ):
+            return None
+        usable, total = int(s.get("usable_count") or 0), int(s.get("source_count") or 0)
+        return {
+            "disposition": s.get("disposition") or _disposition(s),
+            "confidence": s.get("confidence", ""),
+            "root_cause": s.get("root_cause", ""),
+            "affected_services": s.get("affected_services", []),
+            "sources_usable": [None] * usable,
+            "sources_queried": [None] * total,
+            "recovery_events": s.get("recovery_events", []),
+        }
+
     def _report(self) -> Panel:
         r = self.state.get("report")
+        # form_hypothesis fills the report fields; produce_report adds the
+        # grounding guard. Show the report once either has run so a driver that
+        # stops after the hypothesis still surfaces a conclusion.
+        if not r and self.done & {"form_hypothesis", "produce_report"}:
+            r = self._report_from_state()
         if not r:
             hint = (
                 "reasoning…" if self.current == "form_hypothesis" else "investigating…"
@@ -156,11 +183,11 @@ class View:
         return Panel(t, title="triage report", border_style=ACCENT, title_align="left")
 
     def render(self) -> Group:
-        header = Text.assemble(
-            ("leavitt", f"bold {ACCENT}"),
-            ("  read-only incident triage\n", DIM),
-            (self.query, TEXT),
-        )
+        parts = [("leavitt", f"bold {ACCENT}"), ("  read-only incident triage", DIM)]
+        if self.driver:
+            parts += [("   driver: ", DIM), (self.driver, f"bold {ACCENT}")]
+        parts += [("\n", DIM), (self.query, TEXT)]
+        header = Text.assemble(*parts)
         return Group(
             Panel(header, border_style=FAINT),
             self._pipeline(),
@@ -224,4 +251,104 @@ def run(query: str) -> int:
     os.environ.setdefault("LEAVITT_PROM_UID", "webstore-metrics")
     os.environ.setdefault("LEAVITT_LOKI_UID", "webstore-logs-loki")
     asyncio.run(investigate(query))
+    return 0
+
+
+def _tracker_dir():
+    from pathlib import Path
+
+    base = os.getenv("LEAVITT_TRACKER_DIR") or str(Path.home() / ".theodosia")
+    return Path(base) / "leavitt"
+
+
+def _read_run(log) -> tuple[set[str], str | None, dict]:
+    """Parse a Theodosia run log into (completed actions, in-flight action, state)."""
+    import json
+
+    done: set[str] = set()
+    current: str | None = None
+    state: dict = {}
+    for line in log.read_text().splitlines():
+        try:
+            e = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if e.get("type") == "begin_entry":
+            current = e.get("action")
+        elif e.get("type") == "end_entry":
+            done.add(e.get("action"))
+            current = None
+            if e.get("state"):
+                state = e["state"]
+    return done, current, state
+
+
+async def investigate_via_hermes(query: str) -> dict:
+    """Drive a headless Hermes (Nemotron on Crusoe) run against the Leavitt MCP and
+    render the enforced FSM live off Theodosia's audit trail. Hermes is the agent;
+    this is its front-end. We read the tracker, not Hermes stdout, so the agent's
+    own banner/skills never reach the view."""
+    import shutil
+    from pathlib import Path
+
+    store = _tracker_dir()
+    before = {p.name for p in store.iterdir()} if store.exists() else set()
+    hermes = shutil.which("hermes") or str(Path.home() / ".local" / "bin" / "hermes")
+
+    view = View(query)
+    view.driver = "Hermes · Nemotron · Crusoe"
+    console = Console()
+
+    proc = await asyncio.create_subprocess_exec(
+        hermes,
+        "-t",
+        "leavitt",
+        "-z",
+        query,
+        stdout=asyncio.subprocess.DEVNULL,
+        stderr=asyncio.subprocess.DEVNULL,
+    )
+
+    run_dir: Path | None = None
+
+    def refresh() -> None:
+        nonlocal run_dir
+        if store.exists():
+            # Hermes also creates an empty session dir, so don't latch onto the
+            # first new dir; each tick pick the new run with the most logged data.
+            best, best_size = None, 0
+            for p in store.iterdir():
+                if not p.is_dir() or p.name in before:
+                    continue
+                log = p / "log.jsonl"
+                size = log.stat().st_size if log.exists() else 0
+                if size > best_size:
+                    best, best_size = p, size
+            if best is not None:
+                run_dir = best
+        if run_dir is not None:
+            done, current, state = _read_run(run_dir / "log.jsonl")
+            view.done, view.current = done, current
+            if state:
+                view.state = state
+
+    with Live(
+        view.render(), refresh_per_second=12, screen=True, console=console
+    ) as live:
+        while proc.returncode is None:
+            refresh()
+            live.update(view.render())
+            try:
+                await asyncio.wait_for(proc.wait(), timeout=0.4)
+            except asyncio.TimeoutError:
+                pass
+        refresh()
+        view.current = None
+        live.update(view.render())
+    console.print(view.render())
+    return view.state.get("report") or {}
+
+
+def run_agent(query: str) -> int:
+    asyncio.run(investigate_via_hermes(query))
     return 0
