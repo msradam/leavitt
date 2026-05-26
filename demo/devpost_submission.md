@@ -63,14 +63,26 @@ transition against the graph, so the agent cannot skip the correlation step to
 jump to a conclusion. The diagnosis always rests on evidence it actually
 gathered.
 
-```mermaid
-flowchart TD
-    receive_query --> enumerate_sources --> query_grafana_metrics
-    query_grafana_metrics --> query_grafana_logs --> query_client_load
-    query_client_load --> query_deployment_context --> correlate_evidence
-    correlate_evidence -->|all sources failed: retry| query_grafana_metrics
-    correlate_evidence -->|otherwise| distill_evidence
-    distill_evidence --> form_hypothesis --> produce_report
+```
+  receive_query
+      |
+  enumerate_sources
+      |
+      v
+  +-------------------------------------------------------------+
+  |  read four sources, one validated step each:                |
+  |    query_grafana_metrics      server error rate (Prometheus)|
+  |    query_grafana_logs         warning + error logs (Loki)   |
+  |    query_client_load          client failure rate (k6)      |
+  |    query_deployment_context   feature-flag state            |
+  +-------------------------------------------------------------+
+      |
+      v
+  correlate_evidence ---- all sources failed ----> retry the reads
+      |
+      | otherwise
+      v
+  distill_evidence  ->  form_hypothesis  ->  produce_report  [terminal]
 ```
 
 The flow: receive the question, enumerate sources, read the four sources,
