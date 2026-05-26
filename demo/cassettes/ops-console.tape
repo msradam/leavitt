@@ -6,7 +6,7 @@ Output demo/media/leavitt-ops-console.mp4
 Set Shell "zsh"
 Set FontSize 18
 Set Width 1320
-Set Height 1010
+Set Height 720
 Set Padding 10
 Set Theme "Catppuccin Mocha"
 Hide
@@ -14,7 +14,7 @@ Type "tmux kill-server 2>/dev/null; clear" Enter
 Sleep 1s
 Type "tmux new-session -d -s ops" Enter
 Type "tmux split-window -v -t ops" Enter
-Type "tmux resize-pane -t ops.0 -y 13" Enter
+Type "tmux resize-pane -t ops.0 -y 16" Enter
 Type "tmux send-keys -t ops.0 'cd ~/leavitt && uv run python demo/loadmon.py' Enter" Enter
 Sleep 6s
 Type "tmux send-keys -t ops.1 'hermes -t leavitt' Enter" Enter
