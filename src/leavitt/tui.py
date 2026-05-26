@@ -11,7 +11,7 @@ from __future__ import annotations
 import asyncio
 import os
 
-from rich.console import Group
+from rich.console import Console, Group
 from rich.live import Live
 from rich.panel import Panel
 from rich.table import Table
@@ -177,8 +177,14 @@ async def investigate(query: str, upstream: dict | None = None) -> dict:
     mgr = UpstreamManager(upstream if upstream is not None else default_upstream())
     token = theodosia.bind_upstream(mgr)
     view = View(query)
+    console = Console()
     try:
-        with Live(view.render(), refresh_per_second=12, screen=False) as live:
+        # screen=True renders in place on the alternate buffer (no scroll
+        # duplication while the report panel grows); the final view is printed
+        # to the main screen after, so it persists.
+        with Live(
+            view.render(), refresh_per_second=12, screen=True, console=console
+        ) as live:
             action, _, state = await app.astep(
                 inputs={"query": query, "max_retries": 1}
             )
@@ -199,6 +205,7 @@ async def investigate(query: str, upstream: dict | None = None) -> dict:
     finally:
         await mgr.aclose()
         reset_upstream(token)
+    console.print(view.render())
     return state.get("report", {})
 
 

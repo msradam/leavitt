@@ -1,0 +1,20 @@
+name: leavitt
+description: Read-only observability triage. Cepheid amber on charcoal.
+colors:
+  banner_border: "#30363D"
+  banner_title: "#F2A93B"
+  banner_accent: "#F2A93B"
+  banner_dim: "#8B949E"
+  banner_text: "#E6EDF3"
+  ui_accent: "#FF8800"
+  response_border: "#F2A93B"
+spinner:
+  waiting_faces: ["(✦)", "(✧)"]
+  thinking_faces: ["(✦)", "(·)"]
+  thinking_verbs: ["reading dashboards", "correlating", "distilling", "triaging"]
+branding:
+  agent_name: "Leavitt"
+  welcome: "Leavitt — read-only incident triage. I read your dashboards; I never touch the system."
+  response_label: " ✦ Leavitt "
+  prompt_symbol: "✦"
+tool_prefix: "│"

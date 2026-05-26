@@ -30,6 +30,11 @@ came back.
 Leavitt cannot act on the systems it observes. It has no shell, no write tool,
 no command execution. It reads dashboards and reports.
 
+It ships as a **Hermes agent running NVIDIA Nemotron on Crusoe Cloud managed
+inference**: Hermes drives the Leavitt MCP, Nemotron walks the enforced FSM to
+the triage report. The agent is Leavitt; Hermes is the outer harness, Theodosia
+the inner one.
+
 ## How we built it
 
 Leavitt is a Burr state machine mounted as an MCP server by **Theodosia**. An

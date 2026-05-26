@@ -23,6 +23,19 @@ sources usable:    4/4 (grafana_metrics, grafana_logs, client_load, deployment_c
 
 When a source goes down mid-investigation, Leavitt continues with what it has and marks the report `degraded`. When nothing usable comes back, it refuses to conclude `resolved` and returns `inconclusive`. It does not invent evidence, and it does not claim a resolution it cannot support.
 
+## Ships as a Nemotron agent on Crusoe
+
+Leavitt is an MCP server, so any agent can drive it. It ships as a [Hermes](https://github.com/NousResearch/hermes-agent) agent profile running **NVIDIA Nemotron on Crusoe Cloud managed inference**: Hermes connects to the Leavitt MCP and Nemotron drives the enforced FSM to a triage report. The agent is Leavitt; Hermes is the outer harness, Theodosia the inner one. Two governance layers on one Nemotron agent, Hermes sandboxes what the agent can touch, Theodosia enforces the workflow it must follow.
+
+![A Hermes/Nemotron agent on Crusoe driving Leavitt](demo/media/leavitt-hermes-nemotron.gif)
+
+```
+Hermes agent (Nemotron via Crusoe)  ──MCP──>  Leavitt (Theodosia step surface)  ──>  telemetry
+        outer harness                            inner harness (FSM enforcement)
+```
+
+The driver never reaches the dashboards. The upstream connections and credentials live in the Leavitt server, and Nemotron sees only the `step` tool, so no driver, however capable, can touch the observed system except by asking Leavitt to read it. Install and run it as a branded Hermes profile: [`deploy/hermes/`](deploy/hermes/).
+
 ## Architecture
 
 The FSM, enforced by Theodosia:
@@ -77,9 +90,9 @@ leavitt investigate "Users report product pages erroring. Root cause?"
 
 What it shows, honestly: with a capable model (Kimi K2.6) the two arms reach the same conclusions and neither produces a false positive. The benchmark measures that the enforcement layer costs nothing in accuracy while making the agent's behavior bounded and auditable, the disposition is constrained by evidence, every read is in the audit trail, and the failure mode under chaos is a degraded or inconclusive report rather than a confident wrong one. Full tables: [`demo/results_table.md`](demo/results_table.md).
 
-## Composes with the ecosystem
+## Resilient model layer
 
-Because Theodosia mounts Leavitt as a standard MCP server, other agents drive it with no custom glue. A **Hermes agent running NVIDIA Nemotron on Crusoe** managed inference drives Leavitt over MCP and reaches the correct root cause, the agent is Leavitt, Hermes is the outer harness, Theodosia the inner one. Leavitt's own LLM calls route through an OpenAI-compatible gateway (validated with **TrueFoundry's AI Gateway**) with one env switch, so provider failover happens at the gateway while Theodosia handles data-layer resilience. See [`deploy/integrations.md`](deploy/integrations.md).
+Leavitt's own LLM calls route through an OpenAI-compatible gateway with one env switch (`LEAVITT_LLM_API_BASE` / `LEAVITT_LLM_API_KEY`), validated with **TrueFoundry's AI Gateway**. Provider failover, retries, and load balancing happen at the gateway; Theodosia handles data-layer resilience (degraded or inconclusive reports when sources fail, never a confident wrong one). The model that drives the FSM and the model behind the gateway can differ; both are swappable. See [`deploy/integrations.md`](deploy/integrations.md).
 
 ## Read-only by construction
 
