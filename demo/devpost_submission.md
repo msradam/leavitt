@@ -1,11 +1,11 @@
 # Leavitt
 
-**Title:** Leavitt: it reads your dashboards and tells you what broke.
+**Title:** Leavitt: an on-call AI agent that turns alerts into answers.
 
-**Tagline / elevator pitch:** Leavitt is an on-call incident-triage agent. It
-reads every signal you have, metrics, logs, client-side load, and deployment
-changes, correlates them, and tells you what broke and why, staying honest about
-how sure it is. Safe to leave running on production.
+**Tagline / elevator pitch:** Leavitt is an on-call AI agent that turns alerts into answers. It reads every
+observability signal you have, metrics, logs, client-side load, and deployment
+changes, correlates them, and pinpoints the root cause, staying honest about how
+sure it is. Safe to leave running on production.
 
 ---
 

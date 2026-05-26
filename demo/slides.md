@@ -43,9 +43,9 @@ hr { border: 0; border-top: 1px solid var(--hair); margin: 26px 0; }
 
 # LEAVITT
 
-<h2 style="font-size:38px; margin-top:24px;">It reads your dashboards and tells you what broke.</h2>
+<h2 style="font-size:38px; margin-top:24px;">On-call AI agent that turns alerts into answers.</h2>
 
-<p class="cat">On-call incident triage &nbsp;·&nbsp; built on Theodosia</p>
+<p class="cat">Incident triage &nbsp;·&nbsp; built on Theodosia</p>
 
 <p class="colophon cat">
 Adam Munawar Rahman &nbsp;·&nbsp; SWE @ IBM &nbsp;·&nbsp; M.S. Computer Engineering, NYU Tandon<br>

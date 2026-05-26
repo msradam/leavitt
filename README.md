@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="demo/media/leavitt-masthead.gif" alt="Leavitt, an agent that reads your dashboards and tells you what broke" width="820">
+  <img src="demo/media/leavitt-masthead.gif" alt="Leavitt, an on-call AI agent that turns alerts into answers" width="820">
 </p>
 
 # Leavitt
