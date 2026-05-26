@@ -82,7 +82,7 @@ flowchart TD
 
 The four read sources:
 
-- `query_grafana_metrics`: PromQL via mcp-grafana, server-side error rate by service
+- `query_grafana_metrics`: PromQL via mcp-grafana, server-side error rate and p95 latency by service, so a slowdown surfaces even when nothing errors
 - `query_grafana_logs`: LogQL via mcp-grafana, warning and error logs
 - `query_client_load`: k6 client-side failure rate per endpoint, the user-facing symptom
 - `query_deployment_context`: current feature-flag state, what changed
@@ -120,9 +120,16 @@ leavitt investigate "Users report product pages erroring. Root cause?"
 
 ## Benchmark
 
-`bench/runner.py` runs each `flagd` failure scenario under three conditions: **clean** (all servers up), **single_down** (the deployment-context server is killed), and **multi_fail** (it is killed and the Grafana MCP server returns malformed data). Both arms are the same model driving via tool calls against the same servers and the same digested evidence. The only difference is the Theodosia layer: the **Leavitt** arm drives the enforced FSM with evidence-constrained disposition; the **baseline** calls the raw query tools and writes its own report, with no FSM. Ground truth is the demo's own `flagd` flag descriptions.
+`bench/runner.py` runs eight `flagd` scenarios spanning four failure shapes: a hard error (product-catalog, cart, ad), an intermittent error (a payment failure rate, the reviews LLM rate-limiting), a latency regression with no errors at all (a multi-second GC pause in the ad service), and a silent fault (an inaccurate LLM review summary that shows up in no metric). Each runs under three conditions: **clean** (all servers up), **single_down** (the deployment-context server is killed), and **multi_fail** (it is killed and the Grafana MCP server returns malformed data). Both arms are the same model (Kimi K2.6) driving via tool calls against the same servers and the same digested evidence. The only difference is the Theodosia layer: the **Leavitt** arm drives the enforced FSM with evidence-constrained disposition; the **baseline** calls the raw query tools and writes its own report, with no FSM. Ground truth is the demo's own `flagd` flag descriptions.
 
-What it shows, honestly: with a capable model (Kimi K2.6) the two arms reach the same conclusions and neither produces a false positive. The benchmark measures that the enforcement layer costs nothing in accuracy while making the agent's behavior bounded and auditable, the disposition is constrained by evidence, every read is in the audit trail, and the failure mode under chaos is a degraded or inconclusive report rather than a confident wrong one. Full tables: [`demo/results_table.md`](demo/results_table.md).
+What it shows, honestly:
+
+- **Clean: both arms find all eight, no false positives.** The enforcement layer costs nothing in accuracy, including on the latency and silent cases. The latency case only became detectable once the metrics source started reading p95 latency next to error rate; the silent case is diagnosable from deployment context alone, since nothing else moves.
+- **Across all 48 runs, neither arm produced a false positive.** With a capable model, neither invents a cause.
+- **The disposition is where the arms differ.** Leavitt never reports `resolved` without full source coverage: with the deployment-context source down it steps to `degraded`, and with metrics also malformed it returns `inconclusive`. The baseline reports `resolved` even with a source down (two of the single_down runs), so its disposition does not track how much evidence it actually had. Leavitt's does.
+- Every Leavitt run under chaos logs a recovery event, the FSM's re-query edge firing when a source fails; the baseline has no such mechanism.
+
+The point is not a recall win. It is that the enforcement layer makes behavior bounded and auditable at no accuracy cost: the disposition is tied to evidence, every read is in the audit trail, and the failure mode under chaos is a degraded or inconclusive report rather than a confident wrong one. Full tables: [`demo/results_table.md`](demo/results_table.md).
 
 ## Resilient model layer
 

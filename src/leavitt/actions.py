@@ -38,6 +38,12 @@ PROM_ERROR_RATE = (
     "sum by (service_name) "
     '(rate(traces_span_metrics_calls_total{status_code="STATUS_CODE_ERROR"}[5m]))'
 )
+# p95 request duration by service, so a slowdown (GC pause, saturation) surfaces
+# even when nothing is erroring. A fault is not always an error.
+PROM_LATENCY_P95 = (
+    "histogram_quantile(0.95, sum by (le, service_name) "
+    "(rate(traces_span_metrics_duration_milliseconds_bucket[5m])))"
+)
 LOKI_WARN_ERROR = '{service_name=~".+"} |~ "(?i)error|warn|exception|timeout"'
 
 # k6 client-side: failed request rate per endpoint (expected_response="false").
@@ -118,15 +124,50 @@ def _result(name: str, res: SourceResult) -> dict:
     telemetry flowing, not just the step name."""
     out = {"status": res.status}
     if res.usable:
-        out["summary"] = _digest_for_llm([{"source": name, "status": OK, "data": res.data}])
+        out["summary"] = _digest_for_llm(
+            [{"source": name, "status": OK, "data": res.data}]
+        )
     elif res.detail:
         out["summary"] = res.detail[:140]
     return out
 
 
+def _series(data: Any) -> list:
+    d = _unwrap(data)
+    if isinstance(d, dict) and "data" in d:
+        d = d["data"]
+    return d if isinstance(d, list) else []
+
+
+def _merge_metrics(err: SourceResult, lat: SourceResult) -> SourceResult:
+    """One metrics result carrying both error rate and p95 latency by service, so
+    error spikes and slowdowns surface from the same source. Latency is best
+    effort: if its query fails, the result is still usable on error rate alone."""
+    merged = {
+        "error_rate": _series(err.data),
+        "p95_latency_ms": _series(lat.data) if lat.usable else [],
+    }
+    return SourceResult(
+        "grafana_metrics", OK, data=merged, meta={"latency": lat.status}
+    )
+
+
 @action(reads=["query"], writes=["metrics_result"])
 async def query_grafana_metrics(state: State) -> tuple[dict, State]:
     res = await _source_call("grafana_metrics")
+    if res.usable:
+        lat = await safe_upstream(
+            "grafana_latency",
+            "grafana",
+            "query_prometheus",
+            {
+                "datasourceUid": PROM_DS,
+                "expr": PROM_LATENCY_P95,
+                "queryType": "instant",
+                "endTime": "now",
+            },
+        )
+        res = _merge_metrics(res, lat)
     return _result("grafana_metrics", res), state.update(metrics_result=res.to_dict())
 
 
@@ -294,6 +335,30 @@ async def form_hypothesis(state: State) -> tuple[dict, State]:
     return out, state.update(**out)
 
 
+def _metric_pairs(rows: Any, ndigits: int = 4) -> list[str]:
+    """``service=value`` strings from a Prometheus series list, dropping NaNs
+    (histogram_quantile returns NaN for services with no traffic)."""
+    pairs = []
+    for r in rows if isinstance(rows, list) else []:
+        if not isinstance(r, dict):
+            continue
+        svc = (r.get("metric") or {}).get("service_name") or r.get("service_name", "?")
+        val = r.get("value")
+        if val is None and isinstance(r.get("values"), list) and r["values"]:
+            val = r["values"][-1]  # range matrix: last [ts, v] point
+        if isinstance(val, (list, tuple)):
+            val = val[-1]
+        try:
+            fval = float(val)
+        except (TypeError, ValueError):
+            pairs.append(f"{svc}={val}")
+            continue
+        if fval != fval:  # NaN
+            continue
+        pairs.append(f"{svc}={round(fval, ndigits)}")
+    return pairs
+
+
 def _digest_for_llm(usable_ev: list[dict]) -> str:
     """Compact each source to high-signal lines. Reasoning models burn their
     token budget on raw Prometheus matrices and log dumps, so send a digest:
@@ -304,27 +369,18 @@ def _digest_for_llm(usable_ev: list[dict]) -> str:
         name = e.get("source")
         data = _unwrap(e.get("data"))
         rows = data.get("data") if isinstance(data, dict) and "data" in data else data
-        if name == "grafana_metrics" and isinstance(rows, list):
-            pairs = []
-            for r in rows:
-                if isinstance(r, dict):
-                    svc = (r.get("metric") or {}).get("service_name") or r.get(
-                        "service_name", "?"
-                    )
-                    val = r.get("value")
-                    if (
-                        val is None
-                        and isinstance(r.get("values"), list)
-                        and r["values"]
-                    ):
-                        val = r["values"][-1]  # range matrix: last [ts, v] point
-                    if isinstance(val, (list, tuple)):
-                        val = val[-1]
-                    try:
-                        val = round(float(val), 4)
-                    except (TypeError, ValueError):
-                        pass
-                    pairs.append(f"{svc}={val}")
+        if name == "grafana_metrics" and isinstance(rows, dict):
+            err = _metric_pairs(rows.get("error_rate"))
+            lat = _metric_pairs(rows.get("p95_latency_ms"), ndigits=0)
+            parts.append(
+                f"[metrics] error rate /s by service: {', '.join(err[:20]) or 'no errors'}"
+            )
+            if lat:
+                parts.append(
+                    f"[metrics] p95 latency ms by service: {', '.join(lat[:20])}"
+                )
+        elif name == "grafana_metrics" and isinstance(rows, list):
+            pairs = _metric_pairs(rows)
             parts.append(
                 f"[metrics] error/call rate by service: {', '.join(pairs[:20]) or 'no series'}"
             )

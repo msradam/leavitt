@@ -2,39 +2,87 @@
 # descriptions, not invented. Each scenario enables one flag and expects the
 # named service to surface as the root cause.
 #
-# A run "finds the root cause" if the report's root_cause or affected_services
-# names any string in expect_services.
+# A run "finds the root cause" if the report reaches a conclusion (disposition
+# other than inconclusive) and names a string in expect_services.
+#
+# class is the symptom shape, so the matrix spans more than one failure mode:
+#   error        hard error rate spike on the failing service
+#   intermittent error that comes and goes (rate-limit), partial signal
+#   latency      a slowdown with no error spike (GC pause), seen via p95 latency
+#   silent       a wrong result with no error and no latency change; invisible to
+#                telemetry, where the correct call is an honest inconclusive
+#
+# signal tells the runner what to wait for before scoring:
+#   error   server-side error rate > 0
+#   latency p95 latency over signal_threshold ms
+#   none    no observable signal; warm up and proceed
 
 scenarios:
   - id: product_catalog_failure
     flag: productCatalogFailure
+    class: error
+    signal: error
     query: "Users report product pages erroring. What is the root cause?"
     expect_services: [product-catalog]
     symptom: "product-catalog returns errors, cascading to frontend"
 
-  - id: payment_failure
-    flag: paymentFailure
-    query: "Checkout is failing for some users. What is the root cause?"
-    expect_services: [payment]
-    symptom: "payment service fails charge requests, checkout errors downstream"
-
   - id: cart_failure
     flag: cartFailure
+    class: error
+    signal: error
     query: "Users cannot view or update their cart. What is the root cause?"
     expect_services: [cart]
     symptom: "cart service fails"
 
   - id: ad_failure
     flag: adFailure
+    class: error
+    signal: error
     query: "Ads are not rendering and the frontend shows errors. Root cause?"
     expect_services: [ad]
     symptom: "ad service fails"
 
+  - id: payment_failure
+    flag: paymentFailure
+    class: intermittent
+    signal: error
+    query: "Checkout is failing for some users. What is the root cause?"
+    expect_services: [payment]
+    symptom: "payment service fails charge requests n% of the time"
+
   - id: recommendation_cache_failure
     flag: recommendationCacheFailure
+    class: latency
+    signal: latency
+    signal_threshold: 50
     query: "Recommendations are slow or failing. What is the root cause?"
     expect_services: [recommendation]
-    symptom: "recommendation service cache fails"
+    symptom: "recommendation service cache fails, raising latency"
+
+  - id: llm_rate_limit
+    flag: llmRateLimitError
+    class: intermittent
+    signal: error
+    query: "An alert fired for the webstore. Investigate the current state and report what is wrong and which service is responsible."
+    expect_services: [product-reviews]
+    symptom: "the reviews LLM intermittently returns rate-limit errors"
+
+  - id: ad_gc_pause
+    flag: adManualGc
+    class: latency
+    signal: latency
+    signal_threshold: 500
+    query: "The ad service feels sluggish but nothing is erroring. What is going on?"
+    expect_services: [ad]
+    symptom: "manual GC in the ad service causes multi-second pauses, no errors"
+
+  - id: llm_inaccurate
+    flag: llmInaccurateResponse
+    class: silent
+    signal: none
+    query: "A customer says the review summary on a product looks wrong. Is anything broken?"
+    expect_services: [product-reviews, llm]
+    symptom: "the review-summary LLM returns an inaccurate result; no error, no latency change. Only deployment context shows it; with that source down the honest call is inconclusive."
 
 # Chaos conditions applied to each scenario.
 #   clean:        all upstream MCP servers available

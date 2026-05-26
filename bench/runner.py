@@ -40,9 +40,27 @@ def set_flag(name: str, on: bool) -> None:
     FLAGD.write_text(json.dumps(d, indent=2))
 
 
-async def wait_for_signal(service: str, timeout: float = 90.0) -> bool:
-    """Poll server-side error rate until the expected service shows errors."""
-    expr = f'sum(rate(traces_span_metrics_calls_total{{service_name="{service}",status_code="STATUS_CODE_ERROR"}}[1m]))'
+SIGNAL_EXPR = {
+    "error": 'sum(rate(traces_span_metrics_calls_total{{service_name="{svc}",status_code="STATUS_CODE_ERROR"}}[1m]))',
+    "latency": 'histogram_quantile(0.95, sum by(le)(rate(traces_span_metrics_duration_milliseconds_bucket{{service_name="{svc}"}}[2m])))',
+}
+
+
+async def wait_for_signal(scenario: dict, timeout: float = 90.0) -> bool:
+    """Wait until the scenario's failure is observable before running.
+
+    Failure modes show up differently: a hard failure spikes the server-side
+    error rate, a slowdown raises p95 latency, and a silent fault (an inaccurate
+    response) shows nothing. The signal type per scenario says which to watch;
+    `none` just warms up, since the right call there is an honest inconclusive.
+    """
+    kind = scenario.get("signal", "error")
+    service = scenario["expect_services"][0]
+    if kind == "none":
+        await asyncio.sleep(45)
+        return False
+    expr = SIGNAL_EXPR[kind].format(svc=service)
+    threshold = scenario.get("signal_threshold", 0.0 if kind == "error" else 400.0)
     deadline = time.time() + timeout
     async with Client(GRAFANA_SSE) as c:
         while time.time() < deadline:
@@ -58,7 +76,7 @@ async def wait_for_signal(service: str, timeout: float = 90.0) -> bool:
                 )
                 txt = "".join(getattr(b, "text", "") for b in (r.content or []))
                 data = json.loads(txt).get("data", []) if txt else []
-                if data and float(data[0]["value"][1]) > 0:
+                if data and float(data[0]["value"][1]) > threshold:
                     return True
             except Exception:  # noqa: BLE001
                 pass
@@ -99,8 +117,8 @@ async def main() -> int:
     for sc in scenarios:
         print(f"\n=== scenario {sc['id']} (flag {sc['flag']}) ===")
         set_flag(sc["flag"], True)
-        signal = await wait_for_signal(sc["expect_services"][0])
-        print(f"  signal present: {signal}")
+        signal = await wait_for_signal(sc)
+        print(f"  signal present: {signal} (watching {sc.get('signal', 'error')})")
         try:
             for cond in conditions:
                 for arm, runner in (
