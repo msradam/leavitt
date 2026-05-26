@@ -18,13 +18,14 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 
-ACCENT = "#5794F2"  # Grafana blue
-OK = "#73BF69"
-WARN = "#FF9830"
-CRIT = "#F2495C"
-TEXT = "#CCCCDC"
-DIM = "#8E8E8E"
-FAINT = "#4B4B52"
+# Leavitt observatory palette (brand handoff).
+ACCENT = "#F6B755"  # sodium-amber star
+OK = "#F6B755"
+WARN = "#CB9A5B"
+CRIT = "#5D8BB4"  # moon blue
+TEXT = "#DBD7CF"
+DIM = "#78746D"
+FAINT = "#4A545D"
 TERMINAL = "produce_report"
 
 

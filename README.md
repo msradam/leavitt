@@ -1,6 +1,12 @@
+<p align="center">
+  <img src="demo/media/leavitt-banner.gif" alt="Leavitt, an incident agent that reads the plate, not the sky" width="820">
+</p>
+
 # Leavitt
 
 Leavitt is an incident-triage agent that reads observability dashboards and tells you what broke, without touching anything. It ships as a **Hermes agent running NVIDIA Nemotron on Crusoe Cloud managed inference**, runs as a standalone terminal app, and schedules as an unattended on-call worker.
+
+[**Two-minute demo video**](demo/media/leavitt-demo.mp4): the method, then Leavitt triaging a live incident, refusing to skip a step, and reading the load.
 
 **Built on [Theodosia](https://github.com/msradam/theodosia).** Theodosia mounts a Burr state machine as an MCP server and enforces every transition. Leavitt is the state machine: a read-only triage workflow an LLM drives one validated step at a time. It cannot run commands, open shells, or modify the systems it observes. The read-only guarantee is structural, the graph contains only read actions and no path to a write.
 
@@ -72,10 +78,10 @@ flowchart TD
 
 The four read sources:
 
-- `query_grafana_metrics` — PromQL via mcp-grafana, server-side error rate by service
-- `query_grafana_logs` — LogQL via mcp-grafana, warning and error logs
-- `query_client_load` — k6 client-side failure rate per endpoint, the user-facing symptom
-- `query_deployment_context` — current feature-flag state, what changed
+- `query_grafana_metrics`: PromQL via mcp-grafana, server-side error rate by service
+- `query_grafana_logs`: LogQL via mcp-grafana, warning and error logs
+- `query_client_load`: k6 client-side failure rate per endpoint, the user-facing symptom
+- `query_deployment_context`: current feature-flag state, what changed
 
 `correlate_evidence` counts coverage and marks confidence, with one recovery edge: when every source fails it loops back to re-query before giving up. `distill_evidence` reduces raw telemetry to a high-signal digest before `form_hypothesis`. `produce_report` is terminal; `resolved` requires full source coverage and a cause grounded in the observed signal.
 

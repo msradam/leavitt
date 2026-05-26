@@ -2,9 +2,9 @@
 
 Drives the FSM and renders, in real time, the current phase, each source as it
 returns (ok / degraded / down / malformed), and the triage report as it
-resolves. The palette is Grafana's dark dashboard theme: slate panels, a blue
-accent, and Grafana's semantic threshold colors (green/orange/red) on the
-disposition, the same colors a Grafana panel uses for ok/warning/critical.
+resolves. The palette is Leavitt's observatory theme: a plate-black ground, bone
+ink, and a single sodium-amber star as the accent, with a cool moon-blue for the
+counter-tone (a source down, an inconclusive finding).
 """
 
 from __future__ import annotations
@@ -23,15 +23,17 @@ from theodosia import UpstreamManager
 from theodosia.upstream import reset_upstream
 from leavitt.app import build_application, default_upstream
 
-# Grafana dark dashboard palette.
-ACCENT = "#5794F2"  # Grafana blue, brand + borders + active phase
-OK = "#73BF69"  # Grafana green, resolved / source ok
-WARN = "#FF9830"  # Grafana orange, degraded / recovery
-CRIT = "#F2495C"  # Grafana red, inconclusive / source down
-YELLOW = "#FADE2A"  # Grafana yellow, malformed source
-TEXT = "#CCCCDC"  # primary text
-DIM = "#8E8E8E"  # labels / secondary
-FAINT = "#4B4B52"  # pending / idle
+# Leavitt observatory palette (brand handoff): a single sodium-amber star on a
+# plate-black ground, with a cool "moon" blue as the counter-tone. Observatories
+# light their domes amber to preserve dark adaptation; the accent is that light.
+ACCENT = "#F6B755"  # star, sodium amber, the one accent: brand, borders, active
+OK = "#F6B755"  # source ok / phase done (lit)
+WARN = "#CB9A5B"  # marginalia amber, degraded / recovery
+CRIT = "#5D8BB4"  # moon blue, the cool counter-tone: source down / inconclusive
+YELLOW = "#CB9A5B"  # malformed source
+TEXT = "#DBD7CF"  # bone ink
+DIM = "#78746D"  # labels / secondary
+FAINT = "#4A545D"  # pending / idle
 PHASES = [
     "receive_query",
     "enumerate_sources",

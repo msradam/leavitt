@@ -4,7 +4,7 @@ Polls Prometheus (where k6 remote-writes its client-side metrics) once a second
 and renders request rate and iteration rate as scrolling sparklines, with a
 running request total. This is a demo prop: the same k6_* metrics Leavitt reads
 as its client_load source, shown as a live dashboard beside the agent.
-Grafana-dark palette to match the Leavitt skin.
+Observatory palette to match the Leavitt theme.
 
     uv run python demo/loadmon.py            # defaults to http://localhost:9090
     PROM=http://host:9090 uv run python demo/loadmon.py
@@ -25,12 +25,14 @@ from rich.table import Table
 from rich.text import Text
 
 PROM = os.environ.get("PROM", "http://localhost:9090")
+# Leavitt observatory palette (brand handoff): sodium-amber star, marginalia
+# amber, cool moon-blue, bone ink, on a plate-black ground.
 ACCENT, OK, PURPLE, TEXT, DIM = (
-    "#5794F2",
-    "#73BF69",
-    "#B877D9",
-    "#CCCCDC",
-    "#8E8E8E",
+    "#F6B755",
+    "#CB9A5B",
+    "#5D8BB4",
+    "#DBD7CF",
+    "#78746D",
 )
 BLOCKS = " ▁▂▃▄▅▆▇█"
 WINDOW = 70

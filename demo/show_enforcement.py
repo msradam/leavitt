@@ -23,7 +23,12 @@ from rich.text import Text
 
 from leavitt.app import mount_server
 
-AMBER = "dark_orange"
+# Leavitt observatory palette (brand handoff).
+STAR = "#F6B755"  # sodium-amber star
+MOON = "#5D8BB4"  # cool counter-tone: the boundary, the refusal
+TEXT = "#DBD7CF"  # bone ink
+DIM = "#78746D"
+FAINT = "#4A545D"
 c = Console()
 
 
@@ -31,10 +36,10 @@ async def main():
     c.print(
         Panel(
             Text.assemble(
-                ("leavitt", f"bold {AMBER}"),
-                ("  Theodosia transition enforcement", "grey70"),
+                ("leavitt", f"bold {STAR}"),
+                ("  Theodosia transition enforcement", DIM),
             ),
-            border_style="grey42",
+            border_style=FAINT,
         )
     )
 
@@ -43,29 +48,29 @@ async def main():
 
     async with Client(mount_server(upstream={}), log_handler=_quiet) as client:
         await asyncio.sleep(1.2)
-        c.print("\n[white]An agent tries to skip straight to the conclusion:[/]")
-        c.print("[grey70]  step(action=[/][bold]produce_report[/][grey70])[/]")
+        c.print("\n[#DBD7CF]An agent tries to skip straight to the conclusion:[/]")
+        c.print("[#78746D]  step(action=[/][bold]produce_report[/][#78746D])[/]")
         await asyncio.sleep(1.6)
         res = await client.call_tool("step", {"action": "produce_report"})
         sc = res.structured_content or {}
         c.print(
             Panel(
                 Text.assemble(
-                    ("✗ refused  ", "bold red"),
-                    (f"{sc.get('error')}\n", "red"),
-                    (f"{sc.get('message', '')}", "grey70"),
+                    ("✗ refused  ", f"bold {MOON}"),
+                    (f"{sc.get('error')}\n", MOON),
+                    (f"{sc.get('message', '')}", DIM),
                 ),
                 title="Theodosia",
-                border_style="red",
+                border_style=MOON,
                 title_align="left",
             )
         )
         await asyncio.sleep(2.2)
         c.print(
-            "[white]It cannot reach a conclusion without first reading and correlating evidence.[/]"
+            "[#DBD7CF]It cannot reach a conclusion without first reading and correlating evidence.[/]"
         )
         c.print(
-            "[white]There is no write action in the graph, so it cannot act on what it observes.[/]"
+            "[#DBD7CF]There is no write action in the graph, so it cannot act on what it observes.[/]"
         )
         await asyncio.sleep(2.5)
 
