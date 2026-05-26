@@ -60,6 +60,8 @@ hermes cron tick    # run due jobs once (or run the gateway to fire on schedule)
 
 Each firing lands in the trail: `leavitt sessions` lists every scheduled run, complete or `incomplete @ <action>`. A triage worker whose worst case is a visible incomplete trace is one you can leave running.
 
+It can fire on an alert too, not just a schedule: a Hermes inbound webhook turns an Alertmanager or Grafana alert into an investigation. And because the investigation only reads, delivery is a separate step, `leavitt report --discord` reads the latest run from the audit trail and posts the triage report to your on-call channel. Alert in, report out, the agent never touches the system. See [`deploy/hermes/`](deploy/hermes/) for the cron, webhook, and delivery wiring.
+
 ## Architecture
 
 The FSM, enforced by Theodosia:

@@ -95,3 +95,49 @@ hermes cron run leavitt-oncall && hermes cron tick   # fire once now
 
 Each run drives the full FSM to a report in Theodosia's tracker; `leavitt
 sessions` lists them, completed or `incomplete @ <action>`.
+
+## On-call: deliver the report
+
+The investigation is read-only; delivery is a separate harness step. `leavitt
+report` reads the latest completed run from the audit trail and posts a formatted
+incident report. Today it targets a Discord channel webhook:
+
+```bash
+export LEAVITT_DISCORD_WEBHOOK=https://discord.com/api/webhooks/...   # keep in .env
+leavitt report --discord          # post the latest triage report
+leavitt report <id> --discord     # a specific run
+leavitt report                    # print it instead of posting
+```
+
+`deploy/oncall.sh` is the loop a schedule or an alert invokes: it runs the
+headless investigation, then delivers the report.
+
+```bash
+hermes cron create '0 * * * *' --name leavitt-oncall --no-agent \
+  --script oncall.sh             # scheduled on-call: investigate + deliver
+```
+
+## On-call: fire on an alert
+
+Hermes can trigger a run from an inbound webhook, so an alert (Alertmanager,
+Grafana, PagerDuty) becomes a Leavitt investigation. Enable the webhook platform,
+scope it to the Leavitt toolset, and subscribe a route:
+
+```yaml
+# ~/.hermes/config.yaml
+platform_toolsets:
+  webhook: [leavitt]
+platforms:
+  webhook: { enabled: true, extra: { host: "127.0.0.1", port: 8644, secret: "..." } }
+```
+
+```bash
+hermes webhook subscribe leavitt-alert --events alert \
+  --prompt "An alert fired: {summary}. Investigate the current state and report what is wrong and which service is responsible."
+hermes gateway run                # listen on /webhooks/leavitt-alert
+# your alerting system POSTs {"summary": "..."} (HMAC-signed) to the route
+```
+
+The triggered run is scoped to the Leavitt toolset, so even an alert-driven
+investigation can only read. Pair it with `leavitt report --discord` to close the
+loop: alert in, triage report out.
