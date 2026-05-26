@@ -10,6 +10,7 @@ agent can touch, Theodosia enforces the workflow it must follow.
 ## Files
 - `leavitt-profile.config.yaml` — the Hermes profile config (model = Nemotron via
   Crusoe, the Leavitt MCP server, skin = leavitt). Secrets and paths are placeholders.
+- `SOUL.md` — the system prompt: investigate only through the Leavitt MCP tools, never answer from memory.
 - `skins/leavitt.yaml` — the Leavitt skin (amber-on-charcoal, Cepheid star motif).
 
 ## Install
@@ -21,11 +22,12 @@ curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scri
 hermes profile create leavitt --no-alias
 cp deploy/hermes/leavitt-profile.config.yaml ~/.hermes/profiles/leavitt/config.yaml
 cp deploy/hermes/skins/leavitt.yaml ~/.hermes/skins/leavitt.yaml
+cp deploy/hermes/SOUL.md ~/.hermes/profiles/leavitt/SOUL.md   # forces tool use, no answering from memory
 #    then edit the config: replace /path/to/leavitt and set ${CRUSOE_API_KEY}
 
 # 3. run it
 hermes profile use leavitt
-hermes
+hermes -t leavitt          # scope to the Leavitt MCP only
 # branded as Leavitt, Nemotron drives the Leavitt MCP to a triage report
 ```
 

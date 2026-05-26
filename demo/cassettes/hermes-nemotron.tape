@@ -11,7 +11,7 @@ Hide
 Type "cd ~/leavitt && clear" Enter
 Sleep 1s
 Show
-Type "hermes" Enter
+Type "hermes -t leavitt" Enter
 Sleep 4s
 Type "Users report product pages are erroring. Investigate with the leavitt tools and report the root cause and affected services."
 Sleep 1s
