@@ -2,8 +2,9 @@
 
 Drives the FSM and renders, in real time, the current phase, each source as it
 returns (ok / degraded / down / malformed), and the triage report as it
-resolves. The aesthetic is a dark ops console: monospace values, an amber accent
-on the disposition, state colors that mean something.
+resolves. The palette is Grafana's dark dashboard theme: slate panels, a blue
+accent, and Grafana's semantic threshold colors (green/orange/red) on the
+disposition, the same colors a Grafana panel uses for ok/warning/critical.
 """
 
 from __future__ import annotations
@@ -22,7 +23,15 @@ from theodosia import UpstreamManager
 from theodosia.upstream import reset_upstream
 from leavitt.app import build_application, default_upstream
 
-AMBER = "dark_orange"
+# Grafana dark dashboard palette.
+ACCENT = "#5794F2"  # Grafana blue, brand + borders + active phase
+OK = "#73BF69"  # Grafana green, resolved / source ok
+WARN = "#FF9830"  # Grafana orange, degraded / recovery
+CRIT = "#F2495C"  # Grafana red, inconclusive / source down
+YELLOW = "#FADE2A"  # Grafana yellow, malformed source
+TEXT = "#CCCCDC"  # primary text
+DIM = "#8E8E8E"  # labels / secondary
+FAINT = "#4B4B52"  # pending / idle
 PHASES = [
     "receive_query",
     "enumerate_sources",
@@ -53,7 +62,7 @@ SOURCES = [
     ("client_result", "client load (k6)"),
     ("deployment_result", "deployment (flagd)"),
 ]
-STATUS_STYLE = {"ok": "green", "error": "red", "malformed": "yellow"}
+STATUS_STYLE = {"ok": OK, "error": CRIT, "malformed": YELLOW}
 
 
 class View:
@@ -75,38 +84,34 @@ class View:
         t = Table.grid(padding=(0, 1))
         for p in PHASES:
             if p in self.done:
-                icon, style = "✓", "green"
+                icon, style = "✓", OK
             elif p == self.current:
-                icon, style = "▶", f"bold {AMBER}"
+                icon, style = "▶", f"bold {ACCENT}"
             else:
-                icon, style = "·", "grey42"
+                icon, style = "·", FAINT
             t.add_row(Text(icon, style=style), Text(PHASE_LABEL[p], style=style))
-        return Panel(
-            t, title="state machine", border_style="grey42", title_align="left"
-        )
+        return Panel(t, title="state machine", border_style=FAINT, title_align="left")
 
     def _evidence(self) -> Panel:
         t = Table.grid(padding=(0, 2))
         for key, label in SOURCES:
             raw = self.state.get(key)
             if not raw:
-                t.add_row(
-                    Text("·", style="grey42"), Text(label, style="grey42"), Text("")
-                )
+                t.add_row(Text("·", style=FAINT), Text(label, style=FAINT), Text(""))
                 continue
             status = raw.get("status", "?")
             mark = {"ok": "✓", "error": "✗", "malformed": "⚠"}.get(status, "?")
-            style = STATUS_STYLE.get(status, "grey42")
+            style = STATUS_STYLE.get(status, FAINT)
             detail = raw.get("detail") or f"{status}"
             t.add_row(
                 Text(mark, style=style),
                 Text(label, style=style),
-                Text(detail[:54], style="grey70"),
+                Text(detail[:54], style=DIM),
             )
         conf = self.state.get("confidence", "")
-        sub = Text(f"\nconfidence: {conf}", style="grey70") if conf else Text("")
+        sub = Text(f"\nconfidence: {conf}", style=DIM) if conf else Text("")
         return Panel(
-            Group(t, sub), title="sources", border_style="grey42", title_align="left"
+            Group(t, sub), title="sources", border_style=FAINT, title_align="left"
         )
 
     def _report(self) -> Panel:
@@ -116,48 +121,48 @@ class View:
                 "reasoning…" if self.current == "form_hypothesis" else "investigating…"
             )
             return Panel(
-                Text(hint, style="grey42"),
+                Text(hint, style=FAINT),
                 title="report",
-                border_style="grey42",
+                border_style=FAINT,
                 title_align="left",
             )
         disp = r.get("disposition", "")
         disp_style = {
-            "resolved": "bold green",
-            "degraded": f"bold {AMBER}",
-            "inconclusive": "bold red",
+            "resolved": f"bold {OK}",
+            "degraded": f"bold {WARN}",
+            "inconclusive": f"bold {CRIT}",
         }.get(disp, "bold")
         t = Table.grid(padding=(0, 2))
-        t.add_row(Text("disposition", style="grey70"), Text(disp, style=disp_style))
+        t.add_row(Text("disposition", style=DIM), Text(disp, style=disp_style))
         t.add_row(
-            Text("confidence", style="grey70"),
-            Text(r.get("confidence", ""), style="white"),
+            Text("confidence", style=DIM),
+            Text(r.get("confidence", ""), style=TEXT),
         )
         t.add_row(
-            Text("root cause", style="grey70"),
-            Text(r.get("root_cause", "")[:90], style="white"),
+            Text("root cause", style=DIM),
+            Text(r.get("root_cause", "")[:90], style=TEXT),
         )
         t.add_row(
-            Text("affected", style="grey70"),
-            Text(", ".join(r.get("affected_services", [])) or "-", style="white"),
+            Text("affected", style=DIM),
+            Text(", ".join(r.get("affected_services", [])) or "-", style=TEXT),
         )
         usable, queried = r.get("sources_usable", []), r.get("sources_queried", [])
         t.add_row(
-            Text("sources", style="grey70"),
-            Text(f"{len(usable)}/{len(queried)} usable", style="white"),
+            Text("sources", style=DIM),
+            Text(f"{len(usable)}/{len(queried)} usable", style=TEXT),
         )
         for ev in r.get("recovery_events", []):
-            t.add_row(Text("recovery", style="grey70"), Text(ev[:80], style="yellow"))
-        return Panel(t, title="triage report", border_style=AMBER, title_align="left")
+            t.add_row(Text("recovery", style=DIM), Text(ev[:80], style=WARN))
+        return Panel(t, title="triage report", border_style=ACCENT, title_align="left")
 
     def render(self) -> Group:
         header = Text.assemble(
-            ("leavitt", f"bold {AMBER}"),
-            ("  read-only incident triage\n", "grey70"),
-            (self.query, "white"),
+            ("leavitt", f"bold {ACCENT}"),
+            ("  read-only incident triage\n", DIM),
+            (self.query, TEXT),
         )
         return Group(
-            Panel(header, border_style="grey42"),
+            Panel(header, border_style=FAINT),
             self._pipeline(),
             self._evidence(),
             self._report(),

@@ -1,13 +1,13 @@
 name: leavitt
-description: Read-only observability triage. Cepheid amber on charcoal.
+description: Read-only observability triage. Grafana-dark dashboard palette.
 colors:
-  banner_border: "#F2A93B"
-  banner_title: "#F2A93B"
-  banner_accent: "#F2A93B"
-  banner_dim: "#8B949E"
-  banner_text: "#E6EDF3"
-  ui_accent: "#FF8800"
-  response_border: "#F2A93B"
+  banner_border: "#5794F2"
+  banner_title: "#5794F2"
+  banner_accent: "#73BF69"
+  banner_dim: "#8E8E8E"
+  banner_text: "#CCCCDC"
+  ui_accent: "#5794F2"
+  response_border: "#5794F2"
 spinner:
   waiting_faces: ["(✦)", "(✧)"]
   thinking_faces: ["(✦)", "(·)"]

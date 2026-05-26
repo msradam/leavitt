@@ -4,7 +4,7 @@ Leavitt is an incident-triage agent that reads observability dashboards and tell
 
 **Built on [Theodosia](https://github.com/msradam/theodosia).** Theodosia mounts a Burr state machine as an MCP server and enforces every transition. Leavitt is the state machine: a read-only triage workflow an LLM drives one validated step at a time. It cannot run commands, open shells, or modify the systems it observes. The read-only guarantee is structural, the graph contains only read actions and no path to a write.
 
-The Leavitt agent (right, Nemotron via Crusoe) triaging a live incident while a k6 load test (left, `xk6-top`) shows the user-facing damage:
+The Leavitt agent (below, Nemotron via Crusoe) triaging a live incident while a k6 load test (above, `xk6-top`) shows the user-facing damage:
 
 ![Leavitt as a Nemotron agent triaging a live incident beside a k6 load dashboard](demo/media/leavitt-ops-console.gif)
 
@@ -13,13 +13,13 @@ The Leavitt agent (right, Nemotron via Crusoe) triaging a live incident while a 
 You give Leavitt an incident question. It reads metrics, logs, client-side load results, and deployment context from real observability backends through MCP servers, correlates what came back, notes what is missing, and produces a triage report with a disposition constrained by the evidence, not by the model's confidence.
 
 ```
-$ leavitt investigate "Users report product pages erroring. Root cause?"
+$ leavitt investigate "An alert fired for the webstore. Root cause?"
 
 disposition:       resolved
 confidence:        full
-root cause:        productCatalogFailure feature flag is failing the product-catalog
-                   service, cascading to frontend and frontend-proxy
-affected services: product-catalog, frontend, frontend-proxy
+root cause:        llmRateLimitError feature flag is rate-limiting the product-reviews
+                   service, cascading to frontend and recommendations
+affected services: product-reviews, frontend, recommendations
 sources usable:    4/4 (grafana_metrics, grafana_logs, client_load, deployment_context)
 ```
 
@@ -103,7 +103,7 @@ Every run is recorded through Theodosia's tracker. `leavitt sessions` lists past
 ```
 $ leavitt sessions
 when                  query                    outcome                          steps
-2026-05-25 21:24:..   product pages erroring   resolved  productCatalogFailure   10
+2026-05-25 23:11:..   alert fired, webstore    resolved  llmRateLimitError       10
 2026-05-25 19:36:..   x                        incomplete @ receive_query         1
 ```
 

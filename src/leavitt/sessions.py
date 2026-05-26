@@ -18,7 +18,13 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 
-AMBER = "dark_orange"
+ACCENT = "#5794F2"  # Grafana blue
+OK = "#73BF69"
+WARN = "#FF9830"
+CRIT = "#F2495C"
+TEXT = "#CCCCDC"
+DIM = "#8E8E8E"
+FAINT = "#4B4B52"
 TERMINAL = "produce_report"
 
 
@@ -84,25 +90,35 @@ def list_sessions(limit: int = 20) -> int:
     c = Console()
     runs = _runs()
     if not runs:
-        c.print("[grey70]No sessions yet. Run `leavitt investigate \"...\"`.[/]")
+        c.print('[#8E8E8E]No sessions yet. Run `leavitt investigate "..."`.[/]')
         return 0
-    t = Table(title=Text("leavitt sessions", style=f"bold {AMBER}"), title_justify="left", border_style="grey42")
-    t.add_column("when", style="grey70", no_wrap=True)
-    t.add_column("query", style="white")
+    t = Table(
+        title=Text("leavitt sessions", style=f"bold {ACCENT}"),
+        title_justify="left",
+        border_style=FAINT,
+    )
+    t.add_column("when", style=DIM, no_wrap=True)
+    t.add_column("query", style=TEXT)
     t.add_column("outcome")
-    t.add_column("steps", justify="right", style="grey70")
+    t.add_column("steps", justify="right", style=DIM)
     for r in runs[:limit]:
         when = r["started"][:19].replace("T", " ")
         if r["complete"]:
             disp = (r["report"].get("disposition") or "").lower()
-            style = {"resolved": "green", "degraded": AMBER, "inconclusive": "red"}.get(disp, "white")
+            style = {"resolved": OK, "degraded": WARN, "inconclusive": CRIT}.get(
+                disp, TEXT
+            )
             cause = (r["report"].get("root_cause") or "")[:46]
-            outcome = Text.assemble((disp or "reported", f"bold {style}"), ("  " + cause, "grey70"))
+            outcome = Text.assemble(
+                (disp or "reported", f"bold {style}"), ("  " + cause, DIM)
+            )
         else:
-            outcome = Text(f"incomplete @ {r['last']}", style="yellow")
+            outcome = Text(f"incomplete @ {r['last']}", style=WARN)
         t.add_row(when, (r["query"] or "")[:44], outcome, str(len(r["actions"])))
     c.print(t)
-    c.print(f"[grey50]{len(runs)} sessions in {_store()}. `leavitt sessions <id>` for the full trail.[/]")
+    c.print(
+        f"[#8E8E8E]{len(runs)} sessions in {_store()}. `leavitt sessions <id>` for the full trail.[/]"
+    )
     return 0
 
 
@@ -114,32 +130,55 @@ def show_session(prefix: str) -> int:
         c.print(f"[red]No session matching '{prefix}'.[/]")
         return 1
     head = Text.assemble(
-        ("leavitt session ", f"bold {AMBER}"), (match["id"][:8], "grey70"),
-        (f"   {match['started'][:19].replace('T', ' ')}\n", "grey50"),
-        (match["query"], "white"),
+        ("leavitt session ", f"bold {ACCENT}"),
+        (match["id"][:8], DIM),
+        (f"   {match['started'][:19].replace('T', ' ')}\n", DIM),
+        (match["query"], TEXT),
     )
     steps = Table.grid(padding=(0, 1))
     for a in match["actions"]:
-        steps.add_row(Text("✓", style="green"), Text(a, style="grey80"))
+        steps.add_row(Text("✓", style=OK), Text(a, style=TEXT))
     if not match["complete"]:
-        steps.add_row(Text("✗", style="yellow"), Text(f"stopped here (never reached {TERMINAL})", style="yellow"))
+        steps.add_row(
+            Text("✗", style=WARN),
+            Text(f"stopped here (never reached {TERMINAL})", style=WARN),
+        )
     r = match["report"]
     report_t = Table.grid(padding=(0, 2))
     if match["complete"]:
         disp = (r.get("disposition") or "").lower()
-        style = {"resolved": "green", "degraded": AMBER, "inconclusive": "red"}.get(disp, "white")
-        report_t.add_row(Text("disposition", style="grey70"), Text(disp or "reported", style=f"bold {style}"))
-        report_t.add_row(Text("confidence", style="grey70"), Text(r.get("confidence", ""), style="white"))
-        report_t.add_row(Text("root cause", style="grey70"), Text((r.get("root_cause") or "")[:90], style="white"))
-        report_t.add_row(Text("affected", style="grey70"), Text(", ".join(r.get("affected_services", [])) or "-", style="white"))
-        report_t.add_row(Text("sources", style="grey70"), Text(f"{r.get('usable', 0)}/{r.get('total', 0)} usable", style="white"))
+        style = {"resolved": OK, "degraded": WARN, "inconclusive": CRIT}.get(disp, TEXT)
+        report_t.add_row(
+            Text("disposition", style=DIM),
+            Text(disp or "reported", style=f"bold {style}"),
+        )
+        report_t.add_row(
+            Text("confidence", style=DIM), Text(r.get("confidence", ""), style=TEXT)
+        )
+        report_t.add_row(
+            Text("root cause", style=DIM),
+            Text((r.get("root_cause") or "")[:90], style=TEXT),
+        )
+        report_t.add_row(
+            Text("affected", style=DIM),
+            Text(", ".join(r.get("affected_services", [])) or "-", style=TEXT),
+        )
+        report_t.add_row(
+            Text("sources", style=DIM),
+            Text(f"{r.get('usable', 0)}/{r.get('total', 0)} usable", style=TEXT),
+        )
         for ev in r.get("recovery_events", []):
-            report_t.add_row(Text("recovery", style="grey70"), Text(ev[:80], style="yellow"))
+            report_t.add_row(Text("recovery", style=DIM), Text(ev[:80], style=WARN))
     else:
-        report_t.add_row(Text("report", style="grey70"), Text("none (session did not complete)", style="yellow"))
-    c.print(Group(
-        Panel(head, border_style="grey42"),
-        Panel(steps, title="steps run", border_style="grey42", title_align="left"),
-        Panel(report_t, title="report", border_style=AMBER, title_align="left"),
-    ))
+        report_t.add_row(
+            Text("report", style=DIM),
+            Text("none (session did not complete)", style=WARN),
+        )
+    c.print(
+        Group(
+            Panel(head, border_style=FAINT),
+            Panel(steps, title="steps run", border_style=FAINT, title_align="left"),
+            Panel(report_t, title="report", border_style=ACCENT, title_align="left"),
+        )
+    )
     return 0
