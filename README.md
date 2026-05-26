@@ -118,6 +118,8 @@ export LEAVITT_FLAGCTX_CONFIG=$PWD/opentelemetry-demo/src/flagd/demo.flagd.json
 leavitt investigate "Users report product pages erroring. Root cause?"
 ```
 
+`demo/incident.sh {catalog|cart|reviews|ad-latency}` drives one distinct incident end to end (enable its `flagd` flag, run Leavitt, reset on exit), so you can watch it land a different root cause each time: an error cascade, an intermittent LLM rate-limit, or a GC-pause latency regression that never errors. Add `--load` or `--discord` to pass through to `leavitt agent`.
+
 ## Benchmark
 
 `bench/runner.py` runs eight `flagd` scenarios spanning four failure shapes: a hard error (product-catalog, cart, ad), an intermittent error (a payment failure rate, the reviews LLM rate-limiting), a latency regression with no errors at all (a multi-second GC pause in the ad service), and a silent fault (an inaccurate LLM review summary that shows up in no metric). Each runs under three conditions: **clean** (all servers up), **single_down** (the deployment-context server is killed), and **multi_fail** (it is killed and the Grafana MCP server returns malformed data). Both arms are the same model (Kimi K2.6) driving via tool calls against the same servers and the same digested evidence. The only difference is the Theodosia layer: the **Leavitt** arm drives the enforced FSM with evidence-constrained disposition; the **baseline** calls the raw query tools and writes its own report, with no FSM. Ground truth is the demo's own `flagd` flag descriptions.
