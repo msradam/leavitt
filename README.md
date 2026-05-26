@@ -29,8 +29,6 @@ When a source goes down mid-investigation, Leavitt continues with what it has an
 
 Leavitt is an MCP server, so any agent can drive it. It ships as a [Hermes](https://github.com/NousResearch/hermes-agent) agent profile running **NVIDIA Nemotron on Crusoe Cloud managed inference**: Hermes connects to the Leavitt MCP and Nemotron drives the enforced FSM to a triage report. The agent is Leavitt; Hermes is the outer harness, Theodosia the inner one. Two governance layers on one Nemotron agent, Hermes sandboxes what the agent can touch, Theodosia enforces the workflow it must follow.
 
-![A Hermes/Nemotron agent on Crusoe driving Leavitt](demo/media/leavitt-hermes-nemotron.gif)
-
 ```
 Hermes agent (Nemotron via Crusoe)  ──MCP──>  Leavitt (Theodosia step surface)  ──>  telemetry
         outer harness                            inner harness (FSM enforcement)
