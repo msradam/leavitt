@@ -1,5 +1,5 @@
 # Leavitt README banner: wordmark + a slowly pulsing Cepheid star.
-Output demo/media/leavitt-banner.gif
+Output demo/media/leavitt-masthead.gif
 Set Shell "zsh"
 Set FontSize 22
 Set Width 1200
