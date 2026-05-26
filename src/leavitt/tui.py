@@ -285,7 +285,9 @@ def _read_run(log) -> tuple[set[str], str | None, dict]:
     return done, current, state
 
 
-async def investigate_via_hermes(query: str, with_load: bool = False) -> dict:
+async def investigate_via_hermes(
+    query: str, with_load: bool = False, discord: bool = False
+) -> dict:
     """Drive a headless Hermes (Nemotron on Crusoe) run against the Leavitt MCP and
     render the enforced FSM live off Theodosia's audit trail. Hermes is the agent;
     this is its front-end. We read the tracker, not Hermes stdout, so the agent's
@@ -298,6 +300,7 @@ async def investigate_via_hermes(query: str, with_load: bool = False) -> dict:
 
     from rich.layout import Layout
 
+    from leavitt import report
     from leavitt.loadview import LoadView
 
     store = _tracker_dir()
@@ -309,6 +312,27 @@ async def investigate_via_hermes(query: str, with_load: bool = False) -> dict:
     console = Console()
     load = LoadView() if with_load else None
     last_load = 0.0
+    ld = report.LiveDiscord() if discord else None
+    if ld is not None:
+        ld.start(query)
+    disc_key = None
+    last_disc = 0.0
+
+    def checklist() -> str:
+        lines = []
+        for p in PHASES:
+            m = "✓" if p in view.done else ("▶" if p == view.current else "·")
+            lines.append(f"{m} {PHASE_LABEL[p]}")
+        lines.append("")
+        for skey, label in SOURCES:
+            raw = view.state.get(skey)
+            m = (
+                {"ok": "✓", "error": "✗", "malformed": "⚠"}.get(raw.get("status"), "·")
+                if raw
+                else "·"
+            )
+            lines.append(f"{m} {label}")
+        return "\n".join(lines)
 
     def render_all():
         if load is None:
@@ -362,6 +386,11 @@ async def investigate_via_hermes(query: str, with_load: bool = False) -> dict:
                 last_load = time.monotonic()
             refresh()
             live.update(render_all())
+            if ld is not None:
+                dkey = (frozenset(view.done), view.current)
+                if dkey != disc_key and time.monotonic() - last_disc >= 1.2:
+                    ld.progress(query, checklist())
+                    disc_key, last_disc = dkey, time.monotonic()
             try:
                 await asyncio.wait_for(proc.wait(), timeout=0.4)
             except asyncio.TimeoutError:
@@ -371,10 +400,13 @@ async def investigate_via_hermes(query: str, with_load: bool = False) -> dict:
         refresh()
         view.current = None
         live.update(render_all())
+    if ld is not None:
+        ld.progress(query, checklist(), done=True)
+        ld.final(report.report_from_state(query, view.state))
     console.print(render_all())
     return view.state.get("report") or {}
 
 
-def run_agent(query: str, with_load: bool = False) -> int:
-    asyncio.run(investigate_via_hermes(query, with_load=with_load))
+def run_agent(query: str, with_load: bool = False, discord: bool = False) -> int:
+    asyncio.run(investigate_via_hermes(query, with_load=with_load, discord=discord))
     return 0

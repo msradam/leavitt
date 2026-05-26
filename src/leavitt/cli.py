@@ -28,6 +28,11 @@ def main() -> int:
         action="store_true",
         help="show a live k6 load pane above the investigation",
     )
+    agt.add_argument(
+        "--discord",
+        action="store_true",
+        help="post phased per-step updates and the final report to Discord",
+    )
     ses = sub.add_parser("sessions", help="list past FSM sessions (the audit trail)")
     ses.add_argument("id", nargs="?", help="a session id prefix to show in full")
     dash = sub.add_parser(
@@ -53,7 +58,7 @@ def main() -> int:
     if args.cmd == "agent":
         from leavitt.tui import run_agent
 
-        return run_agent(args.query, with_load=args.load)
+        return run_agent(args.query, with_load=args.load, discord=args.discord)
 
     if args.cmd == "dashboard":
         from leavitt.dashboard import run as run_dashboard

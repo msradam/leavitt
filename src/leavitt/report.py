@@ -128,3 +128,99 @@ def deliver(prefix: str | None = None, discord: bool = False) -> int:
         return 1
     print(f"Delivered run {run['id'][:8]} to Discord (HTTP {code}).")
     return 0
+
+
+# Discord rejects the default urllib User-Agent with 403; set our own.
+_HDRS = {
+    "Content-Type": "application/json",
+    "User-Agent": "Leavitt/1.0 (+https://github.com/msradam/leavitt)",
+}
+
+
+def report_from_state(query: str, state: dict) -> dict:
+    """A run dict in the audit-trail shape, built from live FSM state."""
+    return {
+        "query": query,
+        "complete": True,
+        "report": {
+            "disposition": state.get("disposition") or "",
+            "root_cause": state.get("root_cause") or "",
+            "affected_services": state.get("affected_services") or [],
+            "confidence": state.get("confidence") or "",
+            "usable": int(state.get("usable_count") or 0),
+            "total": int(state.get("source_count") or 0),
+            "recovery_events": state.get("recovery_events") or [],
+        },
+    }
+
+
+class LiveDiscord:
+    """A live, per-step progress message during an investigation, then the final
+    report as a separate message. The agent never posts; this runs harness-side
+    alongside the run, editing one Discord message as the FSM advances."""
+
+    def __init__(self):
+        self.webhook = os.getenv("LEAVITT_DISCORD_WEBHOOK")
+        self.msg_id: str | None = None
+        self.ok = bool(self.webhook)
+
+    def _send(self, url: str, payload: dict, method: str) -> bytes:
+        req = urllib.request.Request(
+            url, data=json.dumps(payload).encode(), headers=_HDRS, method=method
+        )
+        with urllib.request.urlopen(req, timeout=10) as r:
+            return r.read()
+
+    def _progress_embed(self, query: str, checklist: str, done: bool) -> dict:
+        return {
+            "author": {"name": "Leavitt · on-call incident triage", "icon_url": ICON},
+            "title": "Investigation complete" if done else "Investigating",
+            "description": ((query or "")[:200] + "\n```\n" + checklist + "\n```")[
+                :4000
+            ],
+            "color": AMBER,
+            "footer": {"text": "report below" if done else "reading the dashboards…"},
+        }
+
+    def start(self, query: str) -> None:
+        if not self.ok:
+            return
+        try:
+            body = self._send(
+                self.webhook + "?wait=true",
+                {
+                    "username": "Leavitt",
+                    "avatar_url": ICON,
+                    "embeds": [
+                        self._progress_embed(query, "receiving the alert…", False)
+                    ],
+                },
+                "POST",
+            )
+            self.msg_id = json.loads(body).get("id")
+        except Exception:
+            self.ok = False
+
+    def progress(self, query: str, checklist: str, done: bool = False) -> None:
+        if not self.ok or not self.msg_id:
+            return
+        try:
+            self._send(
+                f"{self.webhook}/messages/{self.msg_id}",
+                {"embeds": [self._progress_embed(query, checklist, done)]},
+                "PATCH",
+            )
+        except Exception:
+            pass
+
+    def final(self, run: dict) -> None:
+        if not self.ok:
+            return
+        try:
+            self._send(
+                self.webhook + "?wait=true",
+                {"username": "Leavitt", "avatar_url": ICON, "embeds": [_embed(run)]},
+                "POST",
+            )
+        except Exception:
+            pass
