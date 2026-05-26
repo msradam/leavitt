@@ -32,6 +32,10 @@ services:
       - K6_PROMETHEUS_RW_TREND_STATS=p(95),p(99),avg
       - TARGET=http://frontend-proxy:8080
       - VUS=8
+      - K6_WEB_DASHBOARD=true
+      - K6_WEB_DASHBOARD_PORT=5665
+    ports:
+      - "5665:5665"
     volumes:
       - ./k6-scripts:/scripts:ro
     depends_on:
