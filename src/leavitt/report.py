@@ -16,6 +16,9 @@ from datetime import datetime, timezone
 from leavitt.sessions import _runs
 
 AMBER, MARGIN, MOON = 0xF6B755, 0xCB9A5B, 0x5D8BB4
+ICON = (
+    "https://raw.githubusercontent.com/msradam/leavitt/main/demo/media/leavitt-icon.png"
+)
 
 
 def _disposition(rep: dict) -> str:
@@ -56,12 +59,15 @@ def _embed(run: dict) -> dict:
     for ev in rep.get("recovery_events", [])[:2]:
         fields.append({"name": "recovery", "value": ev[:300]})
     return {
-        "title": "✦ Leavitt — incident triage",
+        "author": {"name": "Leavitt · on-call incident triage", "icon_url": ICON},
+        "title": "Triage report",
         "description": run["query"] or "(no query)",
         "color": color,
         "fields": fields,
+        "thumbnail": {"url": ICON},
         "footer": {
-            "text": "on-call · Hermes / Nemotron / Crusoe · reads, never touches"
+            "text": "Hermes / Nemotron / Crusoe · reads, never touches",
+            "icon_url": ICON,
         },
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
@@ -101,7 +107,9 @@ def deliver(prefix: str | None = None, discord: bool = False) -> int:
     if not webhook:
         print("Set LEAVITT_DISCORD_WEBHOOK to deliver to Discord.")
         return 1
-    payload = json.dumps({"embeds": [_embed(run)]}).encode()
+    payload = json.dumps(
+        {"username": "Leavitt", "avatar_url": ICON, "embeds": [_embed(run)]}
+    ).encode()
     req = urllib.request.Request(
         webhook,
         data=payload,
