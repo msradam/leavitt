@@ -10,6 +10,7 @@ dependencies = [
     "litellm>=1.86.0",
     "mcp>=1.27.1",
     "pyyaml>=6.0.3",
+    "rich>=15.0.0",
     "theodosia>=0.1.0",
 ]
 

@@ -1,10 +1,8 @@
 """Leavitt CLI.
 
-    leavitt serve                 run the MCP server (stdio) for an MCP client
-    leavitt graph                 print the FSM topology
-
-The investigation entrypoint lands in a later phase; for now ``serve`` exposes
-the Theodosia ``step`` surface and ``graph`` prints the enforced transitions.
+leavitt investigate "<question>"  run a triage with a live terminal view
+leavitt serve                     run the MCP server (stdio) for an MCP client
+leavitt graph                     print the FSM topology
 """
 
 from __future__ import annotations
@@ -15,9 +13,16 @@ import argparse
 def main() -> int:
     parser = argparse.ArgumentParser(prog="leavitt", description=__doc__)
     sub = parser.add_subparsers(dest="cmd")
+    inv = sub.add_parser("investigate", help="run a triage with a live terminal view")
+    inv.add_argument("query", help="the incident question")
     sub.add_parser("serve", help="run the Theodosia MCP server over stdio")
     sub.add_parser("graph", help="print the FSM topology")
     args = parser.parse_args()
+
+    if args.cmd == "investigate":
+        from leavitt.tui import run
+
+        return run(args.query)
 
     if args.cmd == "graph":
         from leavitt.app import build_application
