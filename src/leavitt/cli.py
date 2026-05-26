@@ -1,8 +1,10 @@
 """Leavitt CLI.
 
 leavitt investigate "<question>"  run a triage with a live terminal view
-leavitt agent "<question>"        drive a headless Hermes/Nemotron run, render it live
+leavitt agent "<question>" [--load]  drive a headless Hermes/Nemotron run, render it live
+leavitt dashboard [--once]        live on-call board over the audit trail
 leavitt sessions [id]             list past FSM sessions (the audit trail)
+leavitt report [id] [--discord]   deliver a triage report from the audit trail
 leavitt serve                     run the MCP server (stdio) for an MCP client
 leavitt graph                     print the FSM topology
 """
@@ -28,6 +30,10 @@ def main() -> int:
     )
     ses = sub.add_parser("sessions", help="list past FSM sessions (the audit trail)")
     ses.add_argument("id", nargs="?", help="a session id prefix to show in full")
+    dash = sub.add_parser(
+        "dashboard", help="live on-call dashboard over the audit trail"
+    )
+    dash.add_argument("--once", action="store_true", help="print a snapshot and exit")
     rep = sub.add_parser("report", help="deliver a triage report from the audit trail")
     rep.add_argument("id", nargs="?", help="session id prefix (default: latest)")
     rep.add_argument(
@@ -48,6 +54,11 @@ def main() -> int:
         from leavitt.tui import run_agent
 
         return run_agent(args.query, with_load=args.load)
+
+    if args.cmd == "dashboard":
+        from leavitt.dashboard import run as run_dashboard
+
+        return run_dashboard(once=args.once)
 
     if args.cmd == "report":
         from leavitt.report import deliver
