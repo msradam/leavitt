@@ -109,6 +109,11 @@ leavitt report <id> --discord     # a specific run
 leavitt report                    # print it instead of posting
 ```
 
+For a live channel, `leavitt agent --discord` posts one Discord message at the
+start and edits it per step as the FSM advances (the checklist fills in, mirroring
+the console), then ships the final report as a separate message. Add `--load` for
+the k6 pane in the terminal alongside it.
+
 `deploy/oncall.sh` is the loop a schedule or an alert invokes: it runs the
 headless investigation, then delivers the report.
 
