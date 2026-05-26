@@ -49,7 +49,7 @@ def frame(star_color: str) -> Group:
 def main() -> None:
     console = Console()
     with Live(frame(PULSE[0]), console=console, refresh_per_second=20, screen=True) as live:
-        for _ in range(2):  # two pulse cycles
+        for _ in range(8):  # run long enough to outlast `uv run` cold start
             for color in PULSE:
                 live.update(frame(color))
                 time.sleep(0.16)

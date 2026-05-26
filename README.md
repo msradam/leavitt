@@ -6,8 +6,6 @@
 
 Leavitt is an incident-triage agent that reads observability dashboards and tells you what broke, without touching anything. It ships as a **Hermes agent running NVIDIA Nemotron on Crusoe Cloud managed inference**, runs as a standalone terminal app, and schedules as an unattended on-call worker.
 
-[**Two-minute demo video**](demo/media/leavitt-demo.mp4): the method, then Leavitt triaging a live incident, refusing to skip a step, and reading the load.
-
 **Built on [Theodosia](https://github.com/msradam/theodosia).** Theodosia mounts a Burr state machine as an MCP server and enforces every transition. Leavitt is the state machine: a read-only triage workflow an LLM drives one validated step at a time. It cannot run commands, open shells, or modify the systems it observes. The read-only guarantee is structural, the graph contains only read actions and no path to a write.
 
 Leavitt rendering a headless Hermes run (Nemotron on Crusoe) as it drives the enforced FSM one validated step at a time, live off Theodosia's audit trail:
