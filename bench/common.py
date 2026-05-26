@@ -84,6 +84,8 @@ async def kimi_loop(
     for _ in range(max_turns):
         trace["turns"] += 1
         try:
+            from leavitt.actions import _llm_kwargs
+
             resp = await litellm.acompletion(
                 model=MODEL,
                 messages=messages,
@@ -92,6 +94,7 @@ async def kimi_loop(
                 temperature=0.1,
                 max_tokens=8000,
                 allowed_openai_params=["tools", "tool_choice"],
+                **_llm_kwargs(),
             )
         except Exception as exc:  # noqa: BLE001
             trace["error"] = f"{type(exc).__name__}: {exc}"[:300]

@@ -358,6 +358,19 @@ def _digest_for_llm(usable_ev: list[dict]) -> str:
     return "\n\n".join(parts)
 
 
+def _llm_kwargs() -> dict[str, str]:
+    """Optional OpenAI-compatible gateway routing. Set LEAVITT_LLM to an
+    openai/<model-id> and these to send every LLM call through a gateway (a
+    TrueFoundry AI Gateway for provider failover, Crusoe managed inference, etc.)
+    without changing call sites."""
+    kw = {}
+    if os.getenv("LEAVITT_LLM_API_BASE"):
+        kw["api_base"] = os.environ["LEAVITT_LLM_API_BASE"]
+    if os.getenv("LEAVITT_LLM_API_KEY"):
+        kw["api_key"] = os.environ["LEAVITT_LLM_API_KEY"]
+    return kw
+
+
 async def _reason(query: str, digest: str, confidence: str) -> dict[str, Any]:
     import litellm
 
@@ -380,6 +393,7 @@ async def _reason(query: str, digest: str, confidence: str) -> dict[str, Any]:
             # Kimi K2.6 is a reasoning model: tokens are spent on reasoning_content
             # before the JSON answer lands in content, so the budget must be generous.
             max_tokens=8000,
+            **_llm_kwargs(),
         )
         text = resp["choices"][0]["message"]["content"]
         parsed = _parse_json(text)

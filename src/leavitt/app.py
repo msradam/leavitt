@@ -2,11 +2,11 @@
 
 The FSM is linear with one recovery branch:
 
-    receive_query -> enumerate_sources -> query_grafana_metrics
-      -> query_grafana_logs -> query_deployment_context -> correlate_evidence
+    receive_query -> enumerate_sources -> query_grafana_metrics -> query_grafana_logs
+      -> query_client_load -> query_deployment_context -> correlate_evidence
     correlate_evidence -> query_grafana_metrics   (when should_retry: total source failure)
-    correlate_evidence -> form_hypothesis          (otherwise)
-    form_hypothesis -> produce_report              (terminal)
+    correlate_evidence -> distill_evidence         (otherwise)
+    distill_evidence -> form_hypothesis -> produce_report   (terminal)
 
 Theodosia enforces these edges. An agent cannot step from ``receive_query`` to
 ``produce_report``; ``correlate_evidence`` cannot be skipped. Every action is
@@ -87,12 +87,32 @@ def build_application(app_id: str | None = None, track: bool = True) -> Applicat
 
 
 def default_upstream() -> dict[str, Any]:
-    """Upstream MCP server transports. Override via env for real deployments."""
-    grafana = os.getenv("LEAVITT_GRAFANA_MCP", "http://localhost:8000/mcp")
-    flagctx = os.getenv("LEAVITT_FLAGCTX_MCP")
+    """Upstream MCP server transports. Override via env for real deployments.
+
+    LEAVITT_GRAFANA_MCP: Grafana MCP URL (SSE/HTTP).
+    LEAVITT_FLAGCTX_MCP: a flagctx URL, or
+    LEAVITT_FLAGCTX_CONFIG: a flagd config path, served via the bundled stdio
+    flagctx server (so a standalone `leavitt serve` has the deployment source).
+    """
+    import sys
+    from pathlib import Path
+
+    grafana = os.getenv("LEAVITT_GRAFANA_MCP", "http://localhost:8000/sse")
     cfg: dict[str, Any] = {"grafana": grafana}
-    if flagctx:
-        cfg["flagctx"] = flagctx
+    if os.getenv("LEAVITT_FLAGCTX_MCP"):
+        cfg["flagctx"] = os.environ["LEAVITT_FLAGCTX_MCP"]
+    elif os.getenv("LEAVITT_FLAGCTX_CONFIG"):
+        flagctx_py = (
+            Path(__file__).resolve().parents[2] / "deploy" / "flagctx_server.py"
+        )
+        cfg["flagctx"] = {
+            "command": sys.executable,
+            "args": [str(flagctx_py)],
+            "env": {
+                **os.environ,
+                "FLAGCTX_CONFIG_PATH": os.environ["LEAVITT_FLAGCTX_CONFIG"],
+            },
+        }
     return cfg
 
 
