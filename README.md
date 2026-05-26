@@ -8,9 +8,9 @@ Leavitt is an on-call incident-triage agent. It reads your observability dashboa
 
 **Built on [Theodosia](https://github.com/msradam/theodosia).** Theodosia mounts a Burr state machine as an MCP server and enforces every transition. Leavitt is the state machine: a triage workflow an LLM drives one validated step at a time, so every conclusion rests on evidence gathered in order rather than on the model's confidence. Theodosia checks each transition against the graph, and because the graph holds only read actions, the agent diagnoses with no way to act on what it observes.
 
-Leavitt rendering a headless Hermes run (Nemotron on Crusoe) as it drives the enforced FSM one validated step at a time, live off Theodosia's audit trail:
+One console: the live k6 client load on top, and a headless Hermes/Nemotron/Crusoe agent reading it to a triage report below, both off Theodosia's audit trail in real time.
 
-![Leavitt rendering a Hermes/Nemotron/Crusoe agent driving the enforced FSM](demo/media/leavitt-agent.gif)
+![Leavitt's ops console: live load on top, the agent diagnosing the incident below](demo/media/leavitt-console.gif)
 
 ## What it does
 
