@@ -124,6 +124,8 @@ What it shows, honestly: with a capable model (Kimi K2.6) the two arms reach the
 
 Leavitt's own LLM calls route through an OpenAI-compatible gateway with one env switch (`LEAVITT_LLM_API_BASE` / `LEAVITT_LLM_API_KEY`), validated with **TrueFoundry's AI Gateway**. Provider failover, retries, and load balancing happen at the gateway; Theodosia handles data-layer resilience (degraded or inconclusive reports when sources fail, never a confident wrong one). The model that drives the FSM and the model behind the gateway can differ; both are swappable. See [`deploy/integrations.md`](deploy/integrations.md).
 
+For the Hermes-driven path there is a third layer: Hermes's own fallback chain. When the primary (Nemotron on Crusoe) rate-limits, 5xxs, or drops, Hermes retries the investigation on the next provider in the chain. So an unattended run survives a provider brownout, the data layer (Theodosia), the routing layer (the gateway), and the provider layer (Hermes fallback) each fail safe. See [`deploy/hermes/`](deploy/hermes/).
+
 ## Audit trail
 
 Every run is recorded through Theodosia's tracker. `leavitt sessions` lists past investigations, and `leavitt sessions <id>` shows the full trail: every step that ran, where it stopped, and the report. A session that stalled mid-FSM shows as `incomplete @ <action>` rather than as a wrong answer, the failure is visible, not silent. That is the auditability you want from something you leave running.

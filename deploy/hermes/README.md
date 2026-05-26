@@ -141,3 +141,20 @@ hermes gateway run                # listen on /webhooks/leavitt-alert
 The triggered run is scoped to the Leavitt toolset, so even an alert-driven
 investigation can only read. Pair it with `leavitt report --discord` to close the
 loop: alert in, triage report out.
+
+## Model fallback
+
+A third resilience layer for unattended runs: when the primary model (Nemotron on
+Crusoe) rate-limits, 5xxs, or drops the connection, Hermes retries on the next
+provider in the chain. Add a `fallback_providers` list to `~/.hermes/config.yaml`:
+
+```yaml
+fallback_providers:
+  - provider: custom
+    model: moonshotai/Kimi-K2.6
+    base_url: https://api.together.xyz/v1
+    api_key: ${TOGETHER_API_KEY}     # keep the real key in .env
+```
+
+`hermes fallback list` shows the chain. This sits beside Theodosia's data-layer
+resilience and the TrueFoundry gateway's routing-layer failover.
