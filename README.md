@@ -62,6 +62,10 @@ Each firing lands in the trail: `leavitt sessions` lists every scheduled run, co
 
 It can fire on an alert too, not just a schedule: a Hermes inbound webhook turns an Alertmanager or Grafana alert into an investigation. And because the investigation only reads, delivery is a separate step, `leavitt report --discord` reads the latest run from the audit trail and posts the triage report to your on-call channel. Alert in, report out, the agent never touches the system. See [`deploy/hermes/`](deploy/hermes/) for the cron, webhook, and delivery wiring.
 
+For a live channel, `leavitt agent --discord` posts a single message as the run starts and edits it per step as the FSM advances, the same step and source checklist the console shows, then ships the final triage report as its own card.
+
+![Leavitt delivering a triage to Discord: a live per-step message, then the final report](demo/media/leavitt-discord.gif)
+
 ## Architecture
 
 The FSM, enforced by Theodosia:

@@ -7,3 +7,6 @@ deploy/opentelemetry-demo/
 .DS_Store
 Leavitt 2.0.zip
 demo/media/leavitt-demo.mp4
+
+# raw screen recording source (keep only the derived gif/mp4)
+demo/discord-demo.mov
