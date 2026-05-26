@@ -31,9 +31,10 @@ services:
       - K6_PROMETHEUS_RW_SERVER_URL=http://prometheus:9090/api/v1/write
       - K6_PROMETHEUS_RW_TREND_STATS=p(95),p(99),avg
       - TARGET=http://frontend-proxy:8080
-      - VUS=8
+      - VUS=24
       - K6_WEB_DASHBOARD=true
       - K6_WEB_DASHBOARD_PORT=5665
+      - K6_WEB_DASHBOARD_PERIOD=1s
     ports:
       - "5665:5665"
     volumes:

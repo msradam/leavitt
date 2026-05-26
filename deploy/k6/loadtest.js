@@ -28,7 +28,7 @@ export const options = {
   scenarios: {
     shoppers: {
       executor: "constant-vus",
-      vus: Number(__ENV.VUS || 8),
+      vus: Number(__ENV.VUS || 24),
       duration: __ENV.DURATION || "720h",
     },
   },
@@ -79,5 +79,8 @@ export default function () {
     addToCart(userId);
     http.post(`${BASE}/api/checkout`, JSON.stringify({ ...PERSON, userId }), { ...JSON_HDR, tags: { name: "checkout" } });
   }
-  sleep(Math.random() * 3 + 1);
+  // Modulate think time on a slow shared wave so aggregate throughput rises and
+  // falls (constant VUs alone produce a flat rate). Keeps the run continuous.
+  const phase = Math.sin(Date.now() / 8000);
+  sleep(2.25 + 1.75 * phase + Math.random() * 0.5);
 }

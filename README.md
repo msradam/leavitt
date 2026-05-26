@@ -4,7 +4,7 @@ Leavitt is an incident-triage agent that reads observability dashboards and tell
 
 **Built on [Theodosia](https://github.com/msradam/theodosia).** Theodosia mounts a Burr state machine as an MCP server and enforces every transition. Leavitt is the state machine: a read-only triage workflow an LLM drives one validated step at a time. It cannot run commands, open shells, or modify the systems it observes. The read-only guarantee is structural, the graph contains only read actions and no path to a write.
 
-The Leavitt agent (below, Nemotron via Crusoe) triaging a live incident while a k6 load test (above, `xk6-top`) shows the user-facing damage:
+The Leavitt agent (below, Nemotron via Crusoe) triaging a live incident, with a live view of the k6 client load it is reading (above):
 
 ![Leavitt as a Nemotron agent triaging a live incident beside a k6 load dashboard](demo/media/leavitt-ops-console.gif)
 
