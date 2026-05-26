@@ -2,10 +2,8 @@
 
 **Title:** Leavitt: On-Call AI Agent, Turns Alerts Into Answers
 
-**Tagline / elevator pitch:** Leavitt is an on-call AI agent that turns alerts into answers. It reads every
-observability signal you have, metrics, logs, client-side load, and deployment
-changes, correlates them, and pinpoints the root cause, staying honest about how
-sure it is. Safe to leave running on production.
+**Elevator pitch** (Devpost field, 200-char limit; this is 177):
+On-call AI agent that turns alerts into answers. It reads your metrics, logs, load, and deploys, correlates them, and finds the root cause, staying honest when the data is thin.
 
 ---
 
