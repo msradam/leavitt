@@ -23,6 +23,7 @@ section {
   font-weight: 300;
   padding: 80px 110px;
   letter-spacing: 0.01em;
+  position: relative;
 }
 h1 { font-family: "Instrument Serif", serif; font-weight: 400; font-size: 92px; color: var(--ink); margin: 0; letter-spacing: 0.04em; }
 h2 { font-family: "Instrument Serif", serif; font-style: italic; font-weight: 400; font-size: 50px; color: var(--ink); margin: 0 0 40px; line-height: 1.15; }
@@ -31,7 +32,7 @@ em { color: var(--moon); font-style: italic; }
 strong { color: var(--star); font-weight: 400; }
 .cat { font-family: "IBM Plex Mono", monospace; font-size: 16px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--ink-dim); }
 .star { color: var(--star); }
-.colophon { position: absolute; bottom: 46px; left: 110px; }
+.colophon { position: absolute; bottom: 44px; left: 110px; font-size: 12.5px; letter-spacing: 0.08em; line-height: 2.1; white-space: nowrap; }
 hr { border: 0; border-top: 1px solid var(--hair); margin: 26px 0; }
 .big-star { font-size: 64px; color: var(--star); line-height: 1; }
 </style>
@@ -46,7 +47,10 @@ hr { border: 0; border-top: 1px solid var(--hair); margin: 26px 0; }
 
 <p class="cat">Read-only on-call triage &nbsp;·&nbsp; built on Theodosia</p>
 
-<p class="colophon cat">Annals of careful reading &nbsp;·&nbsp; № 0042 &nbsp;·&nbsp; MMXXVI</p>
+<p class="colophon cat">
+Adam Munawar Rahman &nbsp;·&nbsp; SWE @ IBM &nbsp;·&nbsp; M.S. Computer Engineering, NYU Tandon<br>
+DevNetwork [AI + ML] Hackathon 2026 &nbsp;·&nbsp; AI DevSummit
+</p>
 
 ---
 
