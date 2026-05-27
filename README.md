@@ -133,6 +133,21 @@ What it shows, honestly:
 
 The point is not a recall win. It is that the enforcement layer makes behavior bounded and auditable at no accuracy cost: the disposition is tied to evidence, every read is in the audit trail, and the failure mode under chaos is a degraded or inconclusive report rather than a confident wrong one. Full tables: [`demo/results_table.md`](demo/results_table.md).
 
+## Benchmarked on AIOpsLab
+
+Leavitt also runs on [AIOpsLab](https://github.com/microsoft/AIOpsLab) ([arXiv:2501.06706](https://arxiv.org/abs/2501.06706)), Microsoft Research's framework for evaluating incident-management agents. AIOpsLab deploys microservices (here, HotelReservation), injects faults, and scores an agent on detection, localization, and root-cause analysis through a fixed telemetry API. Leavitt runs as an AIOpsLab agent in [`bench/aiopslab/`](bench/aiopslab/): its enforced workflow is preserved as the agent loop, gather metrics, traces, and logs before concluding, then bound the answer to the evidence. The baseline is AIOpsLab's stock free-form agent. Both arms use the same model (Kimi K2.6), the same telemetry APIs, and the same 30-step budget; the only difference is the enforced traversal.
+
+On a 7-problem HotelReservation slice (misconfig, pod-failure, network-delay; detection, localization, and one RCA):
+
+| task | Leavitt | Baseline |
+|---|---|---|
+| detection | 3/3 | 3/3 |
+| localization | 2/3 | 1/3 |
+| RCA (1 problem) | partial (level right, type wrong) | partial (level right, type wrong) |
+| median steps | 8 | 21 |
+
+Enforcement costs nothing in accuracy: the arms tie on detection and RCA, and Leavitt edges localization (one pod-failure case the free-form agent spent 30 steps on and still missed). The consistent difference is shape, Leavitt concludes in 7-8 steps on every problem while the baseline sprawls to 21-30 with high variance. One case, network-delay localization, neither arm solved. This is a small slice (n=1 per cell) and a same-model ablation, not a comparison to AIOpsLab's published baselines; it shows the enforced, auditable, replayable workflow matches free-form accuracy here while staying bounded and predictable. Setup and reproduction: [`bench/aiopslab/`](bench/aiopslab/).
+
 ## Resilient model layer
 
 Leavitt's own LLM calls route through an OpenAI-compatible gateway with one env switch (`LEAVITT_LLM_API_BASE` / `LEAVITT_LLM_API_KEY`), validated with **TrueFoundry's AI Gateway**. Provider failover, retries, and load balancing happen at the gateway; Theodosia handles data-layer resilience (degraded or inconclusive reports when sources fail, never a confident wrong one). The model that drives the FSM and the model behind the gateway can differ; both are swappable. See [`deploy/integrations.md`](deploy/integrations.md).
