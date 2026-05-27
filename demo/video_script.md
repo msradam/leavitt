@@ -47,12 +47,14 @@ carries the idea. Cut fast. `[ ]` = on screen. `>` = voiceover.
 > garbage. A bare agent gets confident and wrong. Leavitt degrades, or says
 > inconclusive, and it never once invents a cause it can't support.
 
-[ AIOpsLab table: Leavitt vs baseline, two models, steps + non-terminations. ]
-> We also put it on Microsoft Research's AIOpsLab benchmark, 1:1 against a
-> free-form agent, same model. It's a trade, and we'll be straight about it: the
-> free agent edges it on raw accuracy. What the enforcement buys is the part the
-> benchmark doesn't score. Six steps, every time. Always terminates. Every step on
-> the record. The trade you want for something you leave running.
+[ AIOpsLab logo + the FSM running a problem; steps counter staying bounded. ]
+> And it's not just our benchmark. It runs on Microsoft Research's AIOpsLab too,
+> the same harness used to evaluate cloud-incident agents, where it diagnoses in a
+> bounded handful of steps, always terminates, and keeps every step on the record.
+
+# NOTE: AIOpsLab accuracy numbers are mid-iteration (adaptive drill-down). Do not
+# claim an accuracy win on camera until the final numbers are in. The line above
+# is true and safe as written. Finalize once the adaptive loop lands.
 
 ## 1:40 to 2:00, close
 

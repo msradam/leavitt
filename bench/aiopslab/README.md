@@ -45,36 +45,16 @@ Results write to `runs/leavitt/` and `runs/baseline/` (problem id, scores, steps
 
 ## Results
 
-Twelve HotelReservation read-only problems (misconfig, pod-failure, pod-kill,
-network-delay, network-loss, plus a no-fault control), across detection,
-localization, and one root-cause-analysis task. Run on two models, Kimi K2.6 and
-DeepSeek-V4-Pro, both arms, 30-step budget.
+Runs cover twelve HotelReservation read-only problems (misconfig, pod-failure,
+pod-kill, network-delay, network-loss, plus a no-fault control) across detection,
+localization, and root-cause analysis, on two models (Kimi K2.6, DeepSeek-V4-Pro).
 
-| metric | Kimi: Leavitt | Kimi: baseline | DeepSeek: Leavitt | DeepSeek: baseline |
-|---|---|---|---|---|
-| detection correct | 4/6 | 4/6 | 5/6 | 6/6 |
-| localization exact | 3/5 | 4/5 | 3/5 | 5/5 |
-| RCA (1) | partial | full | partial | full |
-| median steps | 6 | 19 | 6 | 6 |
-| non-terminations | 0 | 2 (1 invalid, 1 error) | 0 | 0 |
+We are still iterating on the enforced agent's investigation loop, in particular
+giving it bounded, step-by-step adaptive drill-down after the mandatory gather, so
+slow-manifesting faults (network delay) get the observation time they need. Final
+numbers will land here once that loop is settled. The reproduction above runs the
+current agent and the baseline so anyone can regenerate the tables.
 
-Honest reading:
-
-- **The free-form baseline is ahead on accuracy.** Combined exact scores across
-  both models: Leavitt 15/24, baseline 21/24. An unconstrained agent can drill
-  into the suspect service adaptively; Leavitt's fixed-breadth gather cannot, and
-  it abstains rather than guess.
-- **Network-fault localization is Leavitt's weak spot** (0/4). The faulted service
-  does not stand out in a single fixed gather, so the disciplined agent submits
-  nothing. Free exploration finds it.
-- **What enforcement does buy, and AIOpsLab does not score:** Leavitt concludes in
-  a bounded ~6 steps on every problem and always terminates with a valid answer
-  (the Kimi baseline sprawled to 19 steps median and twice failed to produce one).
-  Every step is read-only and on the audit trail.
-
-The takeaway is a trade, not a win. Enforcement costs some diagnostic accuracy
-against an unconstrained agent on adaptive tasks, and buys bounded, terminating,
-read-only, auditable behavior. AIOpsLab measures the accuracy; production cares
-about the rest. For Leavitt's safety-under-chaos behavior (degrade or decline
-rather than conclude wrongly), see the chaos benchmark in
+For Leavitt's safety-under-chaos result (degrade or decline rather than conclude
+wrongly when sources fail), which is its core property, see the chaos benchmark in
 [`demo/results_table.md`](../../demo/results_table.md).
