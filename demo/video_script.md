@@ -1,84 +1,76 @@
-# Demo video script (~2 minutes)
+# Leavitt, demo video script
 
-Two terminal panes side by side. Left: `k6top` showing the live load test against
-the OpenTelemetry Demo. Right: `leavitt investigate`. A browser tab on the flagd
-UI (http://localhost:8080/feature) for the chaos toggle.
-
-Setup before recording:
-- Demo up: `cd deploy && ./setup_demo.sh up`
-- Left pane: `k6top --url http://localhost:5665`
-- Right pane ready to run `leavitt investigate`
-- Env: `LEAVITT_GRAFANA_MCP=http://localhost:8000/sse`,
-  `LEAVITT_FLAGCTX_CONFIG=.../demo.flagd.json`, `TOGETHER_API_KEY` set.
+Target ~2:00, hard cap 3:00. Voiceover is punchy and brisk; it does NOT read the
+slides or narrate the obvious. On-screen text carries names and numbers; the VO
+carries the idea. Cut fast. `[ ]` = on screen. `>` = voiceover.
 
 ---
 
-## 0:00 – 0:15: What it is
+## 0:00 to 0:12, hook
 
-Narration: "Leavitt reads your observability dashboards, correlates the signals,
-and tells you what broke and why. It's built on Theodosia, a state machine an LLM
-drives one validated step at a time. It only reads, so it's safe to run on
-production."
+[ Dark terminal. An alert fires: "webstore error rate spiking." ]
+> It's 3am. Something's broken. You want an AI agent to triage it.
+> But would you let one loose on your production systems?
 
-Screen: title, then the two panes. k6top on the left shows steady traffic, low
-error rate. The system is healthy.
+[ Title card: Leavitt, on-call AI agent. Turns alerts into answers. ]
 
-## 0:15 – 0:35: Inject a real incident
+## 0:12 to 0:35, what it is
 
-Screen: flagd UI, flip `productCatalogFailure` to on.
+[ The ops console: live k6 load on top, the agent walking its steps below. ]
+> Leavitt reads your dashboards the way an on-call engineer does. Metrics, logs,
+> client load, what just deployed. It correlates them and tells you what broke.
+> And it physically cannot touch the thing it's watching.
 
-Narration: "I'll inject a real failure with flagd. The product-catalog service
-starts erroring."
+[ Highlight: the FSM graph, all read actions, no write edge. ]
+> It's a state machine. Every step is checked against the graph before it runs,
+> and the graph only knows how to read. Diagnosis with no off-switch to flip.
 
-Screen: on the left, k6top's error rate and the product endpoint failures climb.
-This is real telemetry, not a mock.
+## 0:35 to 1:05, the run
 
-## 0:35 – 1:15: Leavitt triages it
+[ Console finishing: disposition resolved, root cause = llmRateLimitError on
+  product-reviews, 4/4 sources. ]
+> Here it is on a real incident. It finds the rate-limited service, names it, and
+> backs it with evidence, in eight steps, start to finish.
 
-Screen: right pane, run:
-`leavitt investigate "Users report product pages erroring. Root cause?"`
+[ Discord: the live message filling in per step, then the report card lands. ]
+> It runs headless. Nemotron on Crusoe drives it through the Hermes harness, and
+> it files the report to your on-call channel as it works. Alert in, answer out.
 
-Narration: "Leavitt walks its state machine. It reads four sources through MCP
-servers, server metrics, logs, the k6 client-side failures, and the deployment
-flags, correlates them, distills the evidence, and reasons."
+[ Quick cuts: cron schedule, webhook trigger, fallback Crusoe to Together. ]
+> Schedule it, trigger it from an alert, and when the model provider browns out,
+> it fails over and keeps going.
 
-Screen: the TUI phases light up in order, the four sources resolve to ok, the
-report resolves: disposition resolved, root cause productCatalogFailure cascading
-to frontend and frontend-proxy. The amber report card.
+## 1:05 to 1:40, the proof
 
-Narration: "It found the flag and the cascade, from the telemetry."
+[ Chaos benchmark table: clean / source-down / malformed. ]
+> The interesting part is what happens when the data lies. Kill a source, feed it
+> garbage. A bare agent gets confident and wrong. Leavitt degrades, or says
+> inconclusive, and it never once invents a cause it can't support.
 
-## 1:15 – 1:35: The guarantee
+[ AIOpsLab table: Leavitt vs baseline, two models, steps + non-terminations. ]
+> We also put it on Microsoft Research's AIOpsLab benchmark, 1:1 against a
+> free-form agent, same model. It's a trade, and we'll be straight about it: the
+> free agent edges it on raw accuracy. What the enforcement buys is the part the
+> benchmark doesn't score. Six steps, every time. Always terminates. Every step on
+> the record. The trade you want for something you leave running.
 
-Narration: "It can't cut corners. Theodosia enforces the graph."
+## 1:40 to 2:00, close
 
-Screen: a quick clip of an MCP client calling `step` with `produce_report` from
-the start. The response: `invalid_transition`, refused, with the valid next
-action. "The agent literally cannot skip correlation or reach a conclusion early.
-It won't give you an answer it didn't do the reading for."
+[ leavitt sessions / dashboard: the audit trail of past runs. ]
+> Every investigation is on the record. Nothing it did is a mystery.
+> It only reads, so you can point it at production and walk away.
 
-## 1:35 – 1:50: Resilient under chaos
-
-Narration: "When a source goes down mid-investigation, it degrades instead of
-guessing. When the data is unusable, it returns inconclusive rather than
-hallucinating a cause. It never claims a resolution it can't support."
-
-Screen: a run with a source killed, the report marked degraded, a recovery event
-logged, still no false positive.
-
-## 1:50 – 2:00: It composes
-
-Narration: "The same agent runs as a Nemotron agent on Crusoe, driven by a Hermes
-harness over MCP, with the model layer routable through TrueFoundry's gateway.
-The same agent, the same investigation, wherever it runs. Built on Theodosia."
-
-Screen: the Hermes one-shot output naming the same root cause, then the Theodosia
-GitHub link.
+[ Title: Leavitt. Built on Theodosia. Nemotron on Crusoe. ]
+> Leavitt. On call, so you don't have to be.
 
 ---
 
-## Notes
-- Keep it honest: the benchmark shows parity with a strong model plus the
-  structural guarantees and safe-failure behavior. Do not claim a numeric win.
-- The cascade detail in the report is the proof it read real telemetry, call it
-  out.
+## Delivery notes
+- Pace ~150 wpm. Leave a beat after "no off-switch to flip" and after "invents a
+  cause it can't support." Those two lines are the payoff; land them.
+- Never say a number the viewer can't read in time. Show it, gesture at it
+  ("matches on accuracy"), move on.
+- Cut the cron/webhook/fallback triad fast. It's a montage, not a tour.
+- Assets in order of appearance: leavitt-console.gif, the FSM diagram (README/
+  slides), leavitt-discord.gif, leavitt-enforcement.gif, results_table.md +
+  bench/aiopslab, leavitt-dashboard.gif, masthead.

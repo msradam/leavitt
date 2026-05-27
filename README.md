@@ -135,18 +135,19 @@ The point is not a recall win. It is that the enforcement layer makes behavior b
 
 ## Benchmarked on AIOpsLab
 
-Leavitt also runs on [AIOpsLab](https://github.com/microsoft/AIOpsLab) ([arXiv:2501.06706](https://arxiv.org/abs/2501.06706)), Microsoft Research's framework for evaluating incident-management agents. AIOpsLab deploys microservices (here, HotelReservation), injects faults, and scores an agent on detection, localization, and root-cause analysis through a fixed telemetry API. Leavitt runs as an AIOpsLab agent in [`bench/aiopslab/`](bench/aiopslab/): its enforced workflow is preserved as the agent loop, gather metrics, traces, and logs before concluding, then bound the answer to the evidence. The baseline is AIOpsLab's stock free-form agent. Both arms use the same model (Kimi K2.6), the same telemetry APIs, and the same 30-step budget; the only difference is the enforced traversal.
+Leavitt also runs on [AIOpsLab](https://github.com/microsoft/AIOpsLab) ([arXiv:2501.06706](https://arxiv.org/abs/2501.06706)), Microsoft Research's framework for evaluating incident-management agents. AIOpsLab deploys microservices (here, HotelReservation), injects faults, and scores an agent on detection, localization, and root-cause analysis through a fixed telemetry API. Leavitt runs as an AIOpsLab agent in [`bench/aiopslab/`](bench/aiopslab/): the enforcement machinery is the agent loop deterministically gathering metrics, traces, and logs before it reasons once and submits, bounded and read-only. The baseline is AIOpsLab's stock agent, the same model exploring freely. The comparison is 1:1 except that machinery: same problem description, task instructions, and submit format.
 
-On a 7-problem HotelReservation slice (misconfig, pod-failure, network-delay; detection, localization, and one RCA):
+Twelve HotelReservation read-only problems, two models (Kimi K2.6, DeepSeek-V4-Pro), both arms:
 
-| task | Leavitt | Baseline |
+| metric | Kimi: Leavitt / baseline | DeepSeek: Leavitt / baseline |
 |---|---|---|
-| detection | 3/3 | 3/3 |
-| localization | 2/3 | 1/3 |
-| RCA (1 problem) | partial (level right, type wrong) | partial (level right, type wrong) |
-| median steps | 8 | 21 |
+| detection correct | 4/6 / 4/6 | 5/6 / 6/6 |
+| localization exact | 3/5 / 4/5 | 3/5 / 5/5 |
+| RCA (1) | partial / full | partial / full |
+| median steps | 6 / 19 | 6 / 6 |
+| non-terminations | 0 / 2 | 0 / 0 |
 
-Enforcement costs nothing in accuracy: the arms tie on detection and RCA, and Leavitt edges localization (one pod-failure case the free-form agent spent 30 steps on and still missed). The consistent difference is shape, Leavitt concludes in 7-8 steps on every problem while the baseline sprawls to 21-30 with high variance. One case, network-delay localization, neither arm solved. This is a small slice (n=1 per cell) and a same-model ablation, not a comparison to AIOpsLab's published baselines; it shows the enforced, auditable, replayable workflow matches free-form accuracy here while staying bounded and predictable. Setup and reproduction: [`bench/aiopslab/`](bench/aiopslab/).
+This is honest about the trade, not a win. On raw accuracy the free-form baseline is ahead (15/24 vs 21/24 exact scores combined, it explores adaptively and Leavitt's fixed gather abstains on network faults, 0/4). What enforcement buys, and AIOpsLab does not score, is the rest: Leavitt concludes in a bounded six steps on every problem and always terminates with a valid answer, where the weaker model's free-form agent sprawled and twice failed to produce one. Every step is read-only and on the audit trail. AIOpsLab measures diagnostic accuracy; running unattended on production cares about bounded, terminating, auditable behavior. The accuracy cost of those guarantees is what this table shows. Setup and reproduction: [`bench/aiopslab/`](bench/aiopslab/).
 
 ## Resilient model layer
 

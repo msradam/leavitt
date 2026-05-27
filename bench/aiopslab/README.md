@@ -7,13 +7,17 @@ faults, and scores an agent on detection, localization, and root-cause analysis
 through a fixed telemetry API (metrics via Prometheus, traces via Jaeger, logs via
 kubectl).
 
-`leavitt_agent.py` is Leavitt as an AIOpsLab agent. Leavitt's enforced workflow
-lives in the agent loop: it deterministically gathers metrics, traces, and logs
-(the mandatory query traversal) before it may reason or submit, distills
-per-service latency and errors from the trace data, and bounds its conclusion to
-the evidence. The baseline is AIOpsLab's stock free-form agent
-(`clients/generic_openai.py`). Both arms use the same model, the same telemetry
-APIs, and the same step budget; the only difference is the enforced traversal.
+`leavitt_agent.py` is Leavitt as an AIOpsLab agent. The enforcement machinery
+lives in the agent loop: Leavitt deterministically gathers metrics, traces
+(distilled to per-service latency and errors), and error logs across all pods,
+then reasons once and submits, bounded, and read-only. The baseline is AIOpsLab's
+stock agent (`clients/generic_openai.py`), the same model exploring freely.
+
+The comparison is 1:1 except for that machinery. Both arms get the same problem
+description, the same task instructions, and the same submit format. The only
+difference Leavitt adds is the enforced gather (and one sentence telling the model
+the telemetry was collected for it). This isolates what the enforcement does, not
+prompt wording.
 
 ## Reproduce
 
@@ -29,36 +33,48 @@ cp /path/to/leavitt/bench/aiopslab/leavitt_agent.py clients/
 
 # 3. point the OpenAI-compatible client at your model
 export OPENAI_COMPATIBLE_BASE_URL=https://api.together.xyz/v1
-export OPENAI_COMPATIBLE_MODEL=moonshotai/Kimi-K2.6
+export OPENAI_COMPATIBLE_MODEL=moonshotai/Kimi-K2.6   # or deepseek-ai/DeepSeek-V4-Pro
 export OPENAI_COMPATIBLE_API_KEY=...    # keep the real key out of git
 
-# 4. run a problem (or several)
-poetry run python clients/leavitt_agent.py misconfig_app_hotel_res-localization-1
-# baseline arm: poetry run python clients/generic_openai.py
+# 4. run problems
+poetry run python clients/leavitt_agent.py <problem_id> ...   # Leavitt (gated)
+poetry run python clients/baseline_run.py <problem_id> ...    # baseline
 ```
 
-Results write to `runs/leavitt/` (problem id, scores, steps, tokens).
+Results write to `runs/leavitt/` and `runs/baseline/` (problem id, scores, steps).
 
 ## Results
 
-A 7-problem HotelReservation slice (misconfig, pod-failure, network-delay;
-detection, localization, and one RCA). Same model (Kimi K2.6), same 30-step
-budget, both arms.
+Twelve HotelReservation read-only problems (misconfig, pod-failure, pod-kill,
+network-delay, network-loss, plus a no-fault control), across detection,
+localization, and one root-cause-analysis task. Run on two models, Kimi K2.6 and
+DeepSeek-V4-Pro, both arms, 30-step budget.
 
-| task | Leavitt | Baseline |
-|---|---|---|
-| detection | 3/3 | 3/3 |
-| localization | 2/3 | 1/3 |
-| RCA (1 problem) | partial (level right, type wrong) | partial (level right, type wrong) |
-| median steps | 8 | 21 |
+| metric | Kimi: Leavitt | Kimi: baseline | DeepSeek: Leavitt | DeepSeek: baseline |
+|---|---|---|---|---|
+| detection correct | 4/6 | 4/6 | 5/6 | 6/6 |
+| localization exact | 3/5 | 4/5 | 3/5 | 5/5 |
+| RCA (1) | partial | full | partial | full |
+| median steps | 6 | 19 | 6 | 6 |
+| non-terminations | 0 | 2 (1 invalid, 1 error) | 0 | 0 |
 
-What it shows: the enforced workflow matches the free-form agent on accuracy
-(tie on detection and RCA, an edge on localization) while concluding in 7-8 steps
-every problem against the baseline's 21-30 with high variance. One case,
-network-delay localization, neither arm solved; a per-service latency
-distillation we added did not crack it.
+Honest reading:
 
-Caveats: a small slice (n=1 per cell), and a same-model ablation, not a comparison
-to AIOpsLab's published baselines. It measures what the enforcement layer costs,
-nothing in accuracy here, while the workflow stays bounded, auditable, and
-replayable.
+- **The free-form baseline is ahead on accuracy.** Combined exact scores across
+  both models: Leavitt 15/24, baseline 21/24. An unconstrained agent can drill
+  into the suspect service adaptively; Leavitt's fixed-breadth gather cannot, and
+  it abstains rather than guess.
+- **Network-fault localization is Leavitt's weak spot** (0/4). The faulted service
+  does not stand out in a single fixed gather, so the disciplined agent submits
+  nothing. Free exploration finds it.
+- **What enforcement does buy, and AIOpsLab does not score:** Leavitt concludes in
+  a bounded ~6 steps on every problem and always terminates with a valid answer
+  (the Kimi baseline sprawled to 19 steps median and twice failed to produce one).
+  Every step is read-only and on the audit trail.
+
+The takeaway is a trade, not a win. Enforcement costs some diagnostic accuracy
+against an unconstrained agent on adaptive tasks, and buys bounded, terminating,
+read-only, auditable behavior. AIOpsLab measures the accuracy; production cares
+about the rest. For Leavitt's safety-under-chaos behavior (degrade or decline
+rather than conclude wrongly), see the chaos benchmark in
+[`demo/results_table.md`](../../demo/results_table.md).
