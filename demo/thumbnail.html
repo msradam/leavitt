@@ -3,40 +3,82 @@
 <head>
 <meta charset="utf-8">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Sans:wght@300;400&family=IBM+Plex+Mono:wght@400&display=swap');
-:root { --plate:#040A12; --ink:#DBD7CF; --dim:#78746D; --star:#F6B755; --moon:#5D8BB4; --hair:#252F39; }
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Sans:wght@300;400;500&family=IBM+Plex+Mono:wght@400;500&display=swap');
+:root {
+  --plate:#040A12; --panel:#09121C; --ink:#DBD7CF; --ink-bright:#F2EEE6;
+  --dim:#78746D; --faint:#4A545D; --hair:#252F39;
+  --star:#F6B755; --margin:#CB9A5B; --moon:#5D8BB4;
+}
 * { margin:0; box-sizing:border-box; }
 html,body { width:1280px; height:720px; background:var(--plate); color:var(--ink); font-family:"IBM Plex Sans",sans-serif; font-weight:300; overflow:hidden; }
-.wrap { display:flex; width:100%; height:100%; align-items:center; gap:36px; padding:70px 92px; }
-.left { flex:0 0 45%; }
-.bigstar { font-size:58px; color:var(--star); line-height:1; filter:drop-shadow(0 0 14px rgba(246,183,85,0.45)); }
-h1 { font-family:"Instrument Serif",serif; font-weight:400; font-size:116px; margin:10px 0 0; letter-spacing:0.03em; }
-.tag { font-family:"Instrument Serif",serif; font-style:italic; font-size:33px; margin:16px 0 28px; line-height:1.18; }
-.cat { font-family:"IBM Plex Mono",monospace; font-size:13.5px; letter-spacing:0.12em; text-transform:uppercase; color:var(--dim); line-height:1.95; }
-.run { color:var(--star); font-style:italic; font-family:"Instrument Serif",serif; font-size:27px; margin-top:24px; }
-.right { flex:1; display:flex; flex-direction:column; align-items:center; }
-.cap { font-family:"IBM Plex Mono",monospace; font-size:13px; letter-spacing:0.08em; color:var(--dim); margin-top:8px; text-align:center; }
+.wrap { display:flex; width:100%; height:100%; align-items:center; gap:64px; padding:64px 80px; }
+.left { flex:0 0 46%; }
+.star { font-size:46px; color:var(--star); line-height:1; filter:drop-shadow(0 0 16px rgba(246,183,85,0.55)); }
+h1 { font-family:"Instrument Serif",serif; font-weight:400; font-size:128px; margin:8px 0 0; letter-spacing:0.025em; color:var(--ink-bright); line-height:0.95; }
+.tag { font-family:"Instrument Serif",serif; font-style:italic; font-size:34px; margin:18px 0 10px; line-height:1.2; color:var(--ink); max-width:520px; }
+.kicker-line { font-family:"Instrument Serif",serif; font-style:italic; font-size:26px; color:var(--star); margin:0 0 30px; }
+.pills { display:flex; flex-wrap:wrap; gap:8px 10px; margin-top:0; }
+.pill { font-family:"IBM Plex Mono",monospace; font-size:13px; letter-spacing:0.06em; color:var(--ink); padding:6px 12px; border:1px solid var(--hair); border-radius:999px; background:var(--panel); }
+.kicker { font-family:"IBM Plex Mono",monospace; font-size:12px; letter-spacing:0.18em; text-transform:uppercase; color:var(--dim); margin-bottom:8px; }
+
+.right { flex:1; display:flex; align-items:center; justify-content:center; }
+.card { width:100%; background:var(--panel); border:1px solid var(--hair); border-radius:14px; padding:30px 32px; box-shadow:0 30px 80px rgba(0,0,0,0.45), 0 0 0 1px rgba(246,183,85,0.05) inset; }
+.card-header { display:flex; align-items:center; gap:12px; padding-bottom:18px; border-bottom:1px solid var(--hair); margin-bottom:20px; }
+.card-star { font-size:22px; color:var(--star); filter:drop-shadow(0 0 8px rgba(246,183,85,0.45)); }
+.card-title { font-family:"IBM Plex Sans",sans-serif; font-weight:500; font-size:18px; color:var(--ink-bright); letter-spacing:0.02em; }
+.card-sub { font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--dim); margin-left:auto; letter-spacing:0.08em; }
+
+.row { display:flex; gap:14px; margin:14px 0; align-items:baseline; }
+.label { font-family:"IBM Plex Mono",monospace; font-size:12px; letter-spacing:0.1em; text-transform:uppercase; color:var(--dim); width:130px; flex:0 0 130px; }
+.value { font-family:"IBM Plex Sans",sans-serif; font-weight:400; font-size:18px; color:var(--ink-bright); line-height:1.35; }
+.chip { display:inline-block; font-family:"IBM Plex Mono",monospace; font-size:13px; padding:4px 12px; border-radius:6px; font-weight:500; letter-spacing:0.04em; }
+.chip.resolved { background:rgba(246,183,85,0.16); color:var(--star); border:1px solid rgba(246,183,85,0.3); }
+.chip.full { background:rgba(93,139,180,0.12); color:var(--moon); border:1px solid rgba(93,139,180,0.25); }
+.svc { font-family:"IBM Plex Mono",monospace; font-size:14px; color:var(--star); }
+.footer { padding-top:18px; border-top:1px solid var(--hair); margin-top:20px; font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--dim); letter-spacing:0.08em; }
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="left">
-    <div class="bigstar">&#10022;</div>
-    <h1>LEAVITT</h1>
-    <div class="tag">On-Call AI Agent,<br>Turns Alerts Into Answers</div>
-    <div class="cat">Incident triage<br>built on Theodosia</div>
+    <div class="star">✦</div>
+    <h1>Leavitt</h1>
+    <div class="tag">On-Call AI Agent.<br>Turns Alerts Into Answers.</div>
+    <div class="kicker-line">Leave it to Leavitt.</div>
+    <div class="kicker">Stack</div>
+    <div class="pills">
+      <span class="pill">Hermes</span>
+      <span class="pill">Nemotron · Crusoe</span>
+      <span class="pill">TrueFoundry Gateway</span>
+      <span class="pill">Theodosia FSM</span>
+      <span class="pill">AIOpsLab eval</span>
+    </div>
   </div>
   <div class="right">
-    <svg viewBox="0 0 560 470" width="560" height="470" xmlns="http://www.w3.org/2000/svg">
-      <g stroke="#252F39" stroke-width="1"><line x1="92" y1="60" x2="92" y2="392"/><line x1="92" y1="392" x2="528" y2="392"/></g>
-      <g stroke="#161f29" stroke-width="1"><line x1="92" y1="170" x2="528" y2="170"/><line x1="92" y1="281" x2="528" y2="281"/><line x1="237" y1="60" x2="237" y2="392"/><line x1="383" y1="60" x2="383" y2="392"/></g>
-      <line x1="104" y1="356" x2="520" y2="120" stroke="#5D8BB4" stroke-width="2" stroke-dasharray="2 5" opacity="0.9"/>
-      <g fill="#F6B755" opacity="0.26"><circle cx="120" cy="344" r="9"/><circle cx="152" cy="330" r="9"/><circle cx="186" cy="318" r="9"/><circle cx="222" cy="300" r="9"/><circle cx="258" cy="286" r="9"/><circle cx="296" cy="262" r="9"/><circle cx="334" cy="250" r="9"/><circle cx="372" cy="226" r="9"/><circle cx="412" cy="206" r="9"/><circle cx="452" cy="184" r="9"/><circle cx="492" cy="160" r="9"/></g>
-      <g fill="#F6B755"><circle cx="120" cy="344" r="3.5"/><circle cx="152" cy="330" r="3.5"/><circle cx="186" cy="318" r="3.5"/><circle cx="222" cy="300" r="3.5"/><circle cx="258" cy="286" r="3.5"/><circle cx="296" cy="262" r="3.5"/><circle cx="334" cy="250" r="3.5"/><circle cx="372" cy="226" r="3.5"/><circle cx="412" cy="206" r="3.5"/><circle cx="452" cy="184" r="3.5"/><circle cx="492" cy="160" r="3.5"/></g>
-      <text x="310" y="424" fill="#78746D" font-family="IBM Plex Mono, monospace" font-size="15" letter-spacing="2" text-anchor="middle">LOG PERIOD</text>
-      <text x="50" y="230" fill="#78746D" font-family="IBM Plex Mono, monospace" font-size="15" letter-spacing="2" text-anchor="middle" transform="rotate(-90 50 230)">LUMINOSITY</text>
-    </svg>
-    <div class="cap">Fig. I &nbsp;&middot;&nbsp; the period&ndash;luminosity relation &nbsp;&middot;&nbsp; H. S. Leavitt, 1912</div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-star">✦</div>
+        <div class="card-title">Triage Report</div>
+        <div class="card-sub">read-only · 8 steps</div>
+      </div>
+      <div class="row">
+        <div class="label">Disposition</div>
+        <div class="value"><span class="chip resolved">RESOLVED</span></div>
+      </div>
+      <div class="row">
+        <div class="label">Confidence</div>
+        <div class="value"><span class="chip full">full</span> &nbsp; 4 / 4 sources usable</div>
+      </div>
+      <div class="row">
+        <div class="label">Root cause</div>
+        <div class="value">llmRateLimitError flag is rate-limiting the<br><span class="svc">product-reviews</span> service (HTTP 429)</div>
+      </div>
+      <div class="row">
+        <div class="label">Cascade</div>
+        <div class="value"><span class="svc">product-reviews</span> → <span class="svc">frontend</span> → <span class="svc">recommendations</span></div>
+      </div>
+      <div class="footer">Hermes · Nemotron · Crusoe &nbsp;·&nbsp; reads, never touches</div>
+    </div>
   </div>
 </div>
 </body>

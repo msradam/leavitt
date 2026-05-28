@@ -72,6 +72,15 @@ def resolved() -> Group:
     )
 
 
+def kicker() -> Group:
+    return Group(
+        Text(""),
+        Align.center(Text("✦  L E A V I T T", style=f"bold {TEXT}")),
+        Align.center(Text("Leave it to Leavitt.", style=f"italic {STAR}")),
+        Text(""),
+    )
+
+
 def main() -> None:
     console = Console()
     # One designed pass that fits the VHS capture window, with the verdict held
@@ -86,7 +95,8 @@ def main() -> None:
             for n in range(5):
                 live.update(reading(n)); time.sleep(0.14)
             live.update(correlating()); time.sleep(0.30)
-            live.update(resolved()); time.sleep(2.20)  # the payoff, held
+            live.update(resolved()); time.sleep(1.60)  # the payoff
+            live.update(kicker()); time.sleep(0.90)    # leave it to Leavitt.
 
 
 if __name__ == "__main__":

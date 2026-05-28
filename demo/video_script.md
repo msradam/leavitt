@@ -62,8 +62,8 @@ carries the idea. Cut fast. `[ ]` = on screen. `>` = voiceover.
 > Every investigation is on the record. Nothing it did is a mystery.
 > It only reads, so you can point it at production and walk away.
 
-[ Title: Leavitt. Built on Theodosia. Nemotron on Crusoe. ]
-> Leavitt. On call, so you don't have to be.
+[ Title: Leavitt. On-Call AI Agent. Turns Alerts Into Answers. ]
+> Leave it to Leavitt.
 
 ---
 

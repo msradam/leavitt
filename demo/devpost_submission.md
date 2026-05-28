@@ -1,8 +1,20 @@
 # Leavitt
 
+*Leave it to Leavitt.*
+
 **Title:** Leavitt: On-Call AI Agent, Turns Alerts Into Answers
 
 **Elevator pitch** (Devpost field, 200-char limit; this is 177): On-call AI agent that turns alerts into answers. It reads your metrics, logs, load, and deploys, correlates them, and finds the root cause, staying honest when the data is thin.
+
+---
+
+## At a glance
+
+- **Read-only by construction.** The FSM has no write edge. Safe to leave pointed at production.
+- **Never confident-wrong.** Under chaos, the bare agent drifts to confident wrong answers. Leavitt degrades or declines. Comparison in [`demo/results_table.md`](results_table.md).
+- **Diagnoses from real telemetry.** Metrics (Prometheus), logs (Loki), client load (k6), feature flags, all through MCP. The cascade detail in the report exists only in the live data, not the prompt.
+- **Ships as a Nemotron agent on Crusoe.** Driven headless by Hermes; LLM calls route through TrueFoundry's AI Gateway for provider failover; evaluated on Microsoft Research's AIOpsLab.
+- **Runs unattended.** Cron, alert-webhook, and Discord delivery. It wakes, reads, files a report.
 
 ---
 

@@ -2,6 +2,8 @@
   <img src="demo/media/leavitt-masthead.gif" alt="Leavitt, On-Call AI Agent, Turns Alerts Into Answers" width="820">
 </p>
 
+<p align="center"><i>Leave it to Leavitt.</i></p>
+
 # Leavitt
 
 Leavitt is an on-call incident-triage agent. It reads your observability dashboards, metrics, logs, client-side load, and deployment changes, correlates them, and tells you what broke and why. It ships as a **Hermes agent running NVIDIA Nemotron on Crusoe Cloud managed inference**, runs as a standalone terminal app, and schedules as an unattended worker. Because it only reads, you can leave it pointed at production.
@@ -45,6 +47,8 @@ The driver never reaches the dashboards. The upstream connections and credential
 ## On-call: scheduled and unattended
 
 Because it only reads, it is safe to run unattended. Hermes's scheduler fires the same investigation on an interval, and the cron platform is scoped to the Leavitt toolset, so the scheduled worker has exactly one capability: calling `step`. It wakes, reads the dashboards, and files a report to the audit trail.
+
+![Leavitt's on-call feed: webhook alerts arrive, the agent runs, reports go out](demo/media/leavitt-oncall.gif)
 
 ```yaml
 # ~/.hermes/config.yaml: give the scheduled agent only the Leavitt MCP
