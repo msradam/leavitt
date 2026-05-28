@@ -134,12 +134,18 @@ class LoadView:
                     f"{val:4.1f}/s",
                 )
             body += [Text(""), Text("busiest endpoints", style=DIM), ep]
+
+        # NaN can land here when a service fully errors and Prometheus has no
+        # series for the k6 totals; int(nan) raises, so guard.
+        def _i(x: float) -> int:
+            return int(x) if x == x else 0  # x != x is True only for NaN
+
         body += [
             Text(""),
             Text.assemble(
-                (f"{int(self.total):,} requests", f"bold {TEXT}"),
+                (f"{_i(self.total):,} requests", f"bold {TEXT}"),
                 (" total · ", DIM),
-                (f"{int(self.vus)} ", f"bold {TEXT}"),
+                (f"{_i(self.vus)} ", f"bold {TEXT}"),
                 ("virtual users", DIM),
             ),
         ]
