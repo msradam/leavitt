@@ -37,9 +37,8 @@ carries the idea. Cut fast. `[ ]` = on screen. `>` = voiceover.
 > that caused it, traces the cascade through frontend and checkout, and backs
 > it all with evidence.
 
-[ Live screen-capture of your Discord channel as the report card lands (record
-  this LIVE during your session with `bash demo/incident.sh catalog --load
-  --discord`, so the channel shows a fresh productCatalogFailure post). ]
+[ leavitt-video-discord.png (static): the Discord triage card for the
+  productCatalogFailure run, sits on screen while VO plays over it. ]
 > It runs headless. Nemotron on Crusoe drives it through the Hermes harness; the
 > model layer routes through TrueFoundry's gateway, so when a provider browns
 > out, the investigation fails over and keeps going.
@@ -54,7 +53,8 @@ carries the idea. Cut fast. `[ ]` = on screen. `>` = voiceover.
 
 ## 1:30 to 1:50, the proof
 
-[ demo/results_table.md / chaos benchmark: clean / source-down / multi-fail. ]
+[ leavitt-video-chaos.png (static): the chaos benchmark card, "Never
+  confident-wrong." with the 3-condition table showing Leavitt vs baseline. ]
 > Here is what happens when the data lies. Kill a source, feed it garbage. A bare
 > agent gets confident and wrong. Leavitt degrades, or says inconclusive, and it
 > never once invents a cause it can't support.
@@ -76,10 +76,17 @@ carries the idea. Cut fast. `[ ]` = on screen. `>` = voiceover.
   cause it can't support." Those two lines are the payoff; land them.
 - The "Leave it to Leavitt." outro lands clean, no rush. Let the title card sit.
 - Never say a number the viewer can't read in time. Show it, move on.
-- Asset order: leavitt-masthead.gif, leavitt-video-run.gif (early),
-  leavitt-enforcement.gif (or FSM diagram), leavitt-video-run.gif (late, the
-  verdict), live Discord screen-capture, leavitt-oncall.gif,
-  demo/results_table.md, leavitt-dashboard.gif, leavitt-thumbnail.png.
+- Asset order (every one of these is a finished file in demo/media/, drop into
+  Adobe Express in order):
+  1. leavitt-masthead.mp4   (title beat, 0:00-0:12)
+  2. leavitt-video-run.mp4  (early frames, 0:12-0:25)
+  3. leavitt-enforcement.mp4 (0:25-0:35)
+  4. leavitt-video-run.mp4  (late frames / verdict, 0:35-0:50)
+  5. leavitt-video-discord.png  (static card, 0:50-1:00)
+  6. leavitt-oncall.mp4     (1:00-1:30)
+  7. leavitt-video-chaos.png    (static card, 1:30-1:50)
+  8. leavitt-dashboard.mp4  (1:50-1:55)
+  9. leavitt-thumbnail.png  (1:55-2:00, outro hold)
 - The README's leavitt-console.gif / leavitt-discord.gif are deliberately NOT
   used in the video, the README and the video tell DIFFERENT incidents (the
   video is productCatalogFailure; README stays product-reviews / LLM 429).

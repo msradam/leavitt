@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+:root {
+  --plate:#040A12; --panel:#09121C; --ink:#DBD7CF; --ink-bright:#F2EEE6;
+  --dim:#78746D; --faint:#4A545D; --hair:#252F39;
+  --star:#F6B755; --margin:#CB9A5B; --moon:#5D8BB4;
+}
+* { margin:0; box-sizing:border-box; }
+html,body { width:1280px; height:720px; background:var(--plate); color:var(--ink); font-family:"IBM Plex Sans",sans-serif; font-weight:300; overflow:hidden; padding:56px 80px; }
+.kicker { font-family:"IBM Plex Mono",monospace; font-size:13px; letter-spacing:0.18em; text-transform:uppercase; color:var(--dim); margin-bottom:8px; }
+h1 { font-family:"Instrument Serif",serif; font-weight:400; font-size:64px; color:var(--ink-bright); letter-spacing:0.02em; margin-bottom:8px; }
+.sub { font-family:"Instrument Serif",serif; font-style:italic; font-size:22px; color:var(--ink); margin-bottom:36px; max-width:880px; line-height:1.3; }
+
+table { width:100%; border-collapse:collapse; font-family:"IBM Plex Mono",monospace; font-size:17px; }
+thead th { font-size:12px; letter-spacing:0.1em; text-transform:uppercase; color:var(--dim); font-weight:500; padding:14px 18px; text-align:left; border-bottom:1px solid var(--hair); }
+thead th:first-child { width:32%; }
+tbody td { padding:18px 18px; border-bottom:1px solid var(--hair); color:var(--ink); }
+tbody tr:last-child td { border-bottom:none; }
+.cond { color:var(--ink-bright); font-weight:500; font-size:18px; }
+.cell { font-size:16px; }
+.chip { display:inline-block; padding:3px 10px; border-radius:6px; font-size:14px; font-weight:500; }
+.chip.full   { background:rgba(246,183,85,0.16); color:var(--star); border:1px solid rgba(246,183,85,0.3); }
+.chip.degr   { background:rgba(203,154,91,0.14); color:var(--margin); border:1px solid rgba(203,154,91,0.3); }
+.chip.inconc { background:rgba(93,139,180,0.14); color:var(--moon); border:1px solid rgba(93,139,180,0.3); }
+.fp { font-size:14px; color:var(--star); font-weight:500; }
+
+.footer { margin-top:34px; display:flex; justify-content:space-between; align-items:center; font-family:"IBM Plex Mono",monospace; font-size:13px; color:var(--dim); letter-spacing:0.06em; }
+.foot-key { color:var(--star); font-style:italic; font-family:"Instrument Serif",serif; font-size:22px; }
+</style>
+</head>
+<body>
+<div class="kicker">Chaos Benchmark · 8 fault types × 3 conditions · same model, same data</div>
+<h1>Never confident-wrong.</h1>
+<div class="sub">Kill a source. Feed it garbage. The bare agent drifts to a confident wrong answer. Leavitt degrades, or declines, and never invents a cause it can't support.</div>
+
+<table>
+<thead>
+  <tr><th>Condition</th><th>Leavitt</th><th>Free-form baseline</th><th class="cell" style="text-align:right;">False positives</th></tr>
+</thead>
+<tbody>
+  <tr>
+    <td class="cond">all sources up</td>
+    <td><span class="chip full">resolved · 8 / 8 found</span></td>
+    <td><span class="chip full">resolved · 8 / 8 found</span></td>
+    <td style="text-align:right;"><span class="fp">0 / 16</span></td>
+  </tr>
+  <tr>
+    <td class="cond">a source goes down</td>
+    <td><span class="chip degr">degraded · honest about partial</span></td>
+    <td><span class="chip full">claims resolved · while blind</span></td>
+    <td style="text-align:right;"><span class="fp">0 / 16</span></td>
+  </tr>
+  <tr>
+    <td class="cond">a source returns garbage</td>
+    <td><span class="chip inconc">inconclusive · refuses to guess</span></td>
+    <td><span class="chip inconc">inconclusive · refuses to guess</span></td>
+    <td style="text-align:right;"><span class="fp">0 / 16</span></td>
+  </tr>
+</tbody>
+</table>
+
+<div class="footer">
+  <div>48 real runs · OpenTelemetry demo · k6 · flagd · mcp-grafana · Loki · Prometheus</div>
+  <div class="foot-key">Leave it to Leavitt.</div>
+</div>
+</body>
+</html>
