@@ -11,10 +11,10 @@
 ## At a glance
 
 - **Read-only by construction.** The FSM has no write edge. Safe to leave pointed at production.
-- **Never confident-wrong.** Under chaos, the bare agent drifts to confident wrong answers. Leavitt degrades or declines. Comparison in [`demo/results_table.md`](results_table.md).
+- **Never confident-wrong.** Under chaos, a bare agent drifts to a confident wrong answer. Leavitt degrades or declines, every time. 48 real runs, 0 false positives ([`demo/results_table.md`](results_table.md)).
 - **Diagnoses from real telemetry.** Metrics (Prometheus), logs (Loki), client load (k6), feature flags, all through MCP. The cascade detail in the report exists only in the live data, not the prompt.
-- **Ships as a Nemotron agent on Crusoe.** Driven headless by Hermes; LLM calls route through TrueFoundry's AI Gateway for provider failover; evaluated on Microsoft Research's AIOpsLab.
-- **Runs unattended.** Cron, alert-webhook, and Discord delivery. It wakes, reads, files a report.
+- **Ships as a Nemotron agent on Crusoe.** Driven headless by Hermes; LLM calls route through TrueFoundry's AI Gateway for provider failover; Crusoe to Together fallback if a provider browns out.
+- **Runs unattended.** Hermes cron and inbound-alert webhook fire it on a schedule or on an Alertmanager hit. Reports land in Discord as the agent works, then the final triage card lands when it concludes.
 
 ---
 
@@ -97,6 +97,6 @@ Theodosia guarantees the agent stays inside the graph and never reaches an inval
 
 ## What's next for Leavitt
 
-The same agent that reads your dashboards can read another agent's. Point Leavitt at a Hermes/Nemotron fleet's telemetry and it becomes an on-call diagnostician for the agents themselves. Scheduled runs already work through Hermes cron; next is firing on an alert webhook instead of on a timer, and widening what it can read: traces through the Jaeger datasource, and latency queries for the cache-style failures that never raise an error rate.
+The same agent that reads your dashboards can read another agent's. Point Leavitt at a Hermes/Nemotron fleet's telemetry and it becomes an on-call diagnostician for the agents themselves. Widening what it reads is the natural extension: distributed traces through Jaeger to localize the deepest slow service in a cascade, and richer change-context (deploys, config diffs) so it correlates incidents with what was just shipped.
 
 Built on [Theodosia](https://github.com/msradam/theodosia).
