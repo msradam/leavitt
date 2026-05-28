@@ -17,24 +17,29 @@ carries the idea. Cut fast. `[ ]` = on screen. `>` = voiceover.
 
 ## 0:12 to 0:35, what it is
 
-[ leavitt-console.gif: live k6 load on top, the agent walking its steps below. ]
+[ leavitt-video-run.gif EARLY: load panel + the FSM phases ticking through
+  metrics -> logs -> client load -> deployment, sources panel filling. ]
 > Leavitt reads your dashboards the way an on-call engineer does. Metrics, logs,
 > client load, what just deployed. It correlates them and tells you what broke.
 > And it physically cannot touch the thing it's watching.
 
-[ Cut to the FSM diagram / leavitt-enforcement.gif refusing an invalid step. ]
+[ Cut to the FSM diagram or leavitt-enforcement.gif: Theodosia refusing an
+  invalid transition with valid next actions listed. ]
 > It's a state machine. Every step is checked against the graph before it runs,
 > and the graph only knows how to read. Diagnosis with no off-switch to flip.
 
 ## 0:35 to 1:00, the run
 
-[ Console hero ends: disposition resolved, root cause = llmRateLimitError on
-  product-reviews, 4/4 sources usable, eight steps. ]
-> Here it is on a real incident. It finds the rate-limited service, names it, and
-> backs it with evidence, in eight steps, start to finish.
+[ leavitt-video-run.gif LATE: disposition resolved, root cause =
+  productCatalogFailure flag causing product-catalog degradation, cascade
+  through frontend/checkout/recommendations, 4/4 sources, ten steps. ]
+> Here it is on a real incident. It finds the failing service, names the flag
+> that caused it, traces the cascade through frontend and checkout, and backs
+> it all with evidence.
 
-[ leavitt-discord.gif: the live message filling in per step, then the report
-  card lands. ]
+[ Live screen-capture of your Discord channel as the report card lands (record
+  this LIVE during your session with `bash demo/incident.sh catalog --load
+  --discord`, so the channel shows a fresh productCatalogFailure post). ]
 > It runs headless. Nemotron on Crusoe drives it through the Hermes harness; the
 > model layer routes through TrueFoundry's gateway, so when a provider browns
 > out, the investigation fails over and keeps going.
@@ -71,9 +76,13 @@ carries the idea. Cut fast. `[ ]` = on screen. `>` = voiceover.
   cause it can't support." Those two lines are the payoff; land them.
 - The "Leave it to Leavitt." outro lands clean, no rush. Let the title card sit.
 - Never say a number the viewer can't read in time. Show it, move on.
-- Asset order: leavitt-masthead.gif, leavitt-console.gif, FSM diagram or
-  leavitt-enforcement.gif, leavitt-discord.gif, leavitt-oncall.gif,
+- Asset order: leavitt-masthead.gif, leavitt-video-run.gif (early),
+  leavitt-enforcement.gif (or FSM diagram), leavitt-video-run.gif (late, the
+  verdict), live Discord screen-capture, leavitt-oncall.gif,
   demo/results_table.md, leavitt-dashboard.gif, leavitt-thumbnail.png.
+- The README's leavitt-console.gif / leavitt-discord.gif are deliberately NOT
+  used in the video, the README and the video tell DIFFERENT incidents (the
+  video is productCatalogFailure; README stays product-reviews / LLM 429).
 
 ## What's deliberately not in this video
 - **No AIOpsLab on camera.** We built the harness (in `bench/aiopslab/`) and ran
