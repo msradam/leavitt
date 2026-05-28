@@ -1,0 +1,87 @@
+1
+00:00:00,500 --> 00:00:06,000
+It's 3am. Something's broken.
+You want an AI agent to triage it.
+
+2
+00:00:06,500 --> 00:00:12,000
+But would you let one loose on your production systems?
+
+3
+00:00:13,000 --> 00:00:20,000
+Leavitt reads your dashboards the way an on-call engineer does.
+
+4
+00:00:20,500 --> 00:00:26,500
+Metrics, logs, client load, what just deployed.
+It correlates them and tells you what broke.
+
+5
+00:00:27,000 --> 00:00:31,000
+And it physically cannot touch the thing it's watching.
+
+6
+00:00:32,000 --> 00:00:38,000
+It's a state machine. Every step is checked against the graph before it runs.
+
+7
+00:00:38,500 --> 00:00:43,500
+And the graph only knows how to read.
+Diagnosis with no off-switch to flip.
+
+8
+00:00:45,000 --> 00:00:50,000
+Here it is on a real incident.
+
+9
+00:00:50,500 --> 00:00:58,000
+It finds the failing service, names the flag that caused it,
+traces the cascade through frontend and checkout, and backs it all with evidence.
+
+10
+00:01:00,000 --> 00:01:05,000
+It runs headless. Nemotron on Crusoe drives it through the Hermes harness.
+
+11
+00:01:05,500 --> 00:01:13,000
+The model layer routes through TrueFoundry's gateway,
+so when a provider browns out, the investigation fails over and keeps going.
+
+12
+00:01:15,000 --> 00:01:21,000
+Wire it to your alerts and this is what a shift looks like.
+
+13
+00:01:21,500 --> 00:01:27,000
+Webhook in, agent runs, report out.
+Every step on the record.
+
+14
+00:01:27,500 --> 00:01:31,000
+Twenty-five runs a day, zero confident-wrong.
+
+15
+00:01:33,000 --> 00:01:38,000
+Here is what happens when the data lies.
+Kill a source, feed it garbage.
+
+16
+00:01:38,500 --> 00:01:42,500
+A bare agent gets confident and wrong.
+
+17
+00:01:43,000 --> 00:01:50,000
+Leavitt degrades, or says inconclusive,
+and it never once invents a cause it can't support.
+
+18
+00:01:52,000 --> 00:01:56,000
+Every investigation is on the record. Nothing it did is a mystery.
+
+19
+00:01:56,500 --> 00:01:59,500
+It only reads, so you can point it at production and walk away.
+
+20
+00:02:00,000 --> 00:02:03,000
+Leave it to Leavitt.
