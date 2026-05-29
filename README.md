@@ -1,4 +1,8 @@
 <p align="center">
+  <img src="demo/media/leavitt-winner.png" alt="Challenge Winner, DevNetwork [AI + ML] Hackathon 2026, Crusoe: Hermes / Nemotron Agent" width="820">
+</p>
+
+<p align="center">
   <img src="demo/media/leavitt-masthead.gif" alt="Leavitt, On-Call AI Agent, Turns Alerts Into Answers" width="820">
 </p>
 
