@@ -8,19 +8,22 @@
   --plate:#040A12; --ink:#DBD7CF; --dim:#78746D; --star:#F6B755; --hair:#252F39;
 }
 * { margin:0; box-sizing:border-box; }
-html,body { width:1600px; height:260px; background:var(--plate); color:var(--ink); font-family:"IBM Plex Sans",sans-serif; font-weight:300; overflow:hidden; }
+html,body { width:1600px; height:300px; background:var(--plate); color:var(--ink); font-family:"IBM Plex Sans",sans-serif; font-weight:300; overflow:hidden; }
 .wrap { width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; }
-.eyebrow { display:flex; align-items:center; gap:22px; font-family:"IBM Plex Mono",monospace; font-size:22px; letter-spacing:0.40em; text-transform:uppercase; color:var(--star); }
-.eyebrow .dash { width:64px; height:1px; background:var(--star); opacity:0.5; }
-.title { font-family:"Instrument Serif",serif; font-weight:400; font-size:52px; color:var(--ink); margin:26px 0 0; letter-spacing:0.01em; }
-.sub { font-family:"IBM Plex Mono",monospace; font-size:19px; letter-spacing:0.18em; color:var(--dim); margin-top:22px; text-transform:uppercase; }
+.eyebrow { display:flex; align-items:center; gap:20px; font-family:"IBM Plex Mono",monospace; font-size:19px; letter-spacing:0.34em; text-transform:uppercase; color:var(--dim); }
+.eyebrow .dash { width:54px; height:1px; background:var(--hair); }
+.title { display:flex; align-items:center; gap:30px; font-family:"Instrument Serif",serif; font-weight:400; font-size:92px; color:var(--ink); margin:18px 0 0; line-height:1; }
+.title .star { font-size:46px; color:var(--star); filter:drop-shadow(0 0 18px rgba(246,183,85,0.45)); }
+.title em { font-style:normal; color:var(--star); }
+.sub { font-family:"IBM Plex Mono",monospace; font-size:20px; letter-spacing:0.15em; color:var(--ink); margin-top:24px; text-transform:uppercase; }
+.sub .soft { color:var(--dim); }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <div class="eyebrow"><span class="dash"></span>&#10022;&nbsp;&nbsp;Challenge Winner&nbsp;&nbsp;&#10022;<span class="dash"></span></div>
-  <div class="title">Crusoe: Hermes&nbsp;/&nbsp;Nemotron Agent on Crusoe Cloud</div>
-  <div class="sub">DevNetwork [AI&nbsp;+&nbsp;ML] Hackathon 2026&nbsp;&nbsp;·&nbsp;&nbsp;AI DevSummit</div>
+  <div class="eyebrow"><span class="dash"></span>DevNetwork [AI&nbsp;+&nbsp;ML] Hackathon 2026<span class="dash"></span></div>
+  <div class="title"><span class="star">&#10022;</span>Challenge <em>Winner</em><span class="star">&#10022;</span></div>
+  <div class="sub">Crusoe&nbsp;&nbsp;<span class="soft">·</span>&nbsp;&nbsp;Hermes&nbsp;/&nbsp;Nemotron Agent on Crusoe Cloud</div>
 </div>
 </body>
 </html>
