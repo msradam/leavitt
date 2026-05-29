@@ -79,6 +79,7 @@ For a live channel, `leavitt agent --discord` posts a single message as the run 
 The FSM, enforced by Theodosia:
 
 ```mermaid
+%%{init: {'theme':'base','themeVariables':{'background':'#040A12','primaryColor':'#09121C','primaryTextColor':'#DBD7CF','primaryBorderColor':'#F6B755','lineColor':'#5D8BB4','secondaryColor':'#09121C','tertiaryColor':'#040A12','edgeLabelBackground':'#09121C','fontFamily':'IBM Plex Mono, ui-monospace, monospace'}}}%%
 flowchart TD
     receive_query --> enumerate_sources --> query_grafana_metrics
     query_grafana_metrics --> query_grafana_logs --> query_client_load
